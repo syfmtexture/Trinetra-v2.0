@@ -1,0 +1,318 @@
+"""
+dataset.py — PyTorch Dataset and DataLoader for Project Trinetra.
+
+Reads from the metadata.csv ledger produced by preprocess.py.
+Handles two sample types:
+  • Sequences (video):  (SEQ_LEN, C, H, W) tensors
+  • Static images:      (1, C, H, W)  tensors
+
+A custom collate_fn splits each batch into sequence and static sub-batches,
+keeping shapes consistent and avoiding padding waste.
+
+All augmentation runs on-CPU inside __getitem__ via albumentations,
+preserving VRAM strictly for the forward pass.
+"""
+
+import os
+
+import albumentations as A
+import cv2
+import numpy as np
+import pandas as pd
+import torch
+from PIL import Image
+from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
+from torchvision import transforms
+
+from config import (
+    BATCH_SIZE,
+    IMG_SIZE,
+    METADATA_CSV,
+    NUM_WORKERS,
+    PROCESSED_DIR,
+    SEQ_LEN,
+)
+
+# ──────────────────────────────────────────────
+#  ImageNet normalisation (applied after albumentations)
+# ──────────────────────────────────────────────
+_IMAGENET_MEAN = [0.485, 0.456, 0.406]
+_IMAGENET_STD  = [0.229, 0.224, 0.225]
+
+_to_tensor_and_normalize = transforms.Compose([
+    transforms.ToTensor(),                                      # HWC uint8 → CHW float [0,1]
+    transforms.Normalize(mean=_IMAGENET_MEAN, std=_IMAGENET_STD),
+])
+
+
+# ──────────────────────────────────────────────
+#  Albumentations pipelines
+# ──────────────────────────────────────────────
+
+def _build_train_augmentation(img_size: int = IMG_SIZE) -> A.Compose:
+    """
+    Aggressive augmentation chain simulating hostile social-media
+    re-encoding (WhatsApp, Instagram, etc.).
+
+    Probability notes
+    -----------------
+    Each *group* fires at p ≈ 0.5 – 0.6.  Because there are 4 independent
+    groups, the probability that a sample escapes ALL of them is roughly
+    (1-0.5)^4 ≈ 6%.  So ~94% of training images hit at least one
+    degradation — aggressive enough to force adaptation without total
+    data destruction.
+    """
+    return A.Compose([
+        # ── 0. Resize to model input ──
+        A.Resize(img_size, img_size, interpolation=cv2.INTER_LINEAR),
+
+        # ── 1. Severe Compression Protocol ──
+        #   Simulates brutal platform re-encoding.
+        #   Quality floor at 30 strips high-frequency pixel anomalies.
+        A.ImageCompression(
+            quality_range=(30, 80),
+            p=0.5,
+        ),
+
+        # ── 2. Resolution Degradation ──
+        #   Downscale → re-upscale mimics bandwidth-saving algorithms.
+        A.Downscale(
+            scale_range=(0.5, 0.85),
+            p=0.5,
+        ),
+
+        # ── 3. High-Frequency Destruction ──
+        #   Forces the backbone to rely on structural geometry, not
+        #   superficial edge sharpness.
+        A.OneOf([
+            A.GaussianBlur(blur_limit=(3, 7), p=1.0),
+            A.MotionBlur(blur_limit=(3, 7), p=1.0),
+        ], p=0.5),
+
+        # ── 4. Artificial Noise Injection ──
+        #   Masks synthetic generation signatures; forces deeper
+        #   feature-space reasoning.
+        A.OneOf([
+            A.GaussNoise(std_range=(0.05, 0.15), p=1.0),
+            A.ISONoise(color_shift=(0.01, 0.05),
+                       intensity=(0.1, 0.5), p=1.0),
+        ], p=0.5),
+
+        # ── 5. Standard geometric / colour jitter ──
+        A.HorizontalFlip(p=0.5),
+        A.ShiftScaleRotate(
+            shift_limit=0.05,
+            scale_limit=0.1,
+            rotate_limit=10,
+            border_mode=cv2.BORDER_CONSTANT,
+            p=0.4,
+        ),
+        A.OneOf([
+            A.RandomBrightnessContrast(
+                brightness_limit=0.15, contrast_limit=0.15, p=1.0),
+            A.HueSaturationValue(
+                hue_shift_limit=10, sat_shift_limit=20, val_shift_limit=15, p=1.0),
+        ], p=0.4),
+    ])
+
+
+def _build_val_transform(img_size: int = IMG_SIZE) -> A.Compose:
+    """Clean resize-only transform for validation — no data corruption."""
+    return A.Compose([
+        A.Resize(img_size, img_size, interpolation=cv2.INTER_LINEAR),
+    ])
+
+
+# ──────────────────────────────────────────────
+#  Dataset
+# ──────────────────────────────────────────────
+
+class DeepfakeDataset(Dataset):
+    """
+    Each item is either:
+      • A *sequence* sample  → dict with tensor (SEQ_LEN, C, H, W), label, is_sequence=True
+      • A *static* sample    → dict with tensor (1, C, H, W),       label, is_sequence=False
+
+    The dataset first groups rows by sequence_id so that all 10 frames
+    of a video are returned as a single sample.
+
+    Parameters
+    ----------y
+    augmentation : albumentations.Compose or None
+        Spatial augmentation pipeline applied on-CPU *before* ImageNet
+        normalisation.  Pass the training pipeline for train splits and
+        None / val pipeline for validation.
+    """
+
+    def __init__(
+        self,
+        metadata_csv: str = METADATA_CSV,
+        processed_dir: str = PROCESSED_DIR,
+        augmentation: A.Compose | None = None,
+    ):
+        self.processed_dir = processed_dir
+        self.augmentation = augmentation
+
+        df = pd.read_csv(metadata_csv)
+
+        self.samples: list[dict] = []
+
+        # ── Group video sequences by sequence_id ──
+        seq_df = df[df["is_sequence"] == True]  # noqa: E712
+        if not seq_df.empty:
+            for seq_id, group in seq_df.groupby("sequence_id"):
+                group = group.sort_values("frame_index")
+                paths = group["file_path"].tolist()
+                label = int(group["label"].iloc[0])
+                self.samples.append({
+                    "paths": paths,
+                    "label": label,
+                    "is_sequence": True,
+                })
+
+        # ── Static images are individual samples ──
+        static_df = df[df["is_sequence"] == False]  # noqa: E712
+        for _, row in static_df.iterrows():
+            self.samples.append({
+                "paths": [row["file_path"]],
+                "label": int(row["label"]),
+                "is_sequence": False,
+            })
+
+    def __len__(self) -> int:
+        return len(self.samples)
+
+    def _load_and_augment(self, path: str) -> torch.Tensor:
+        """Load image → albumentations augment → ImageNet normalise → CHW tensor."""
+        img = Image.open(path).convert("RGB")
+        img_np = np.array(img)  # (H, W, 3) uint8 — albumentations native format
+
+        if self.augmentation is not None:
+            img_np = self.augmentation(image=img_np)["image"]
+        else:
+            # Fallback: just resize
+            img_np = cv2.resize(img_np, (IMG_SIZE, IMG_SIZE),
+                                interpolation=cv2.INTER_LINEAR)
+
+        # img_np is (H, W, 3) uint8 → torchvision handles conversion
+        return _to_tensor_and_normalize(img_np)
+
+    def __getitem__(self, idx: int) -> dict:
+        sample = self.samples[idx]
+        frames = []
+        for p in sample["paths"]:
+            full_path = os.path.join(self.processed_dir, p)
+            frames.append(self._load_and_augment(full_path))
+
+        # Stack: (T, C, H, W)  where T = SEQ_LEN or 1
+        tensor = torch.stack(frames, dim=0)
+
+        # Truncate or pad sequences to exactly SEQ_LEN
+        if sample["is_sequence"]:
+            if tensor.shape[0] > SEQ_LEN:
+                tensor = tensor[:SEQ_LEN]
+            elif tensor.shape[0] < SEQ_LEN:
+                pad = torch.zeros(
+                    SEQ_LEN - tensor.shape[0], *tensor.shape[1:],
+                    dtype=tensor.dtype,
+                )
+                tensor = torch.cat([tensor, pad], dim=0)
+
+        return {
+            "frames": tensor,                       # (T, C, H, W)
+            "label": torch.tensor(sample["label"], dtype=torch.float32),
+            "is_sequence": sample["is_sequence"],
+        }
+
+
+# ──────────────────────────────────────────────
+#  Custom collate function
+# ──────────────────────────────────────────────
+
+def collate_fn(batch: list[dict]) -> dict:
+    """
+    Splits the batch into two sub-batches (sequences and statics) so that
+    tensors within each group share the same temporal dimension.
+
+    Returns a dict with keys:
+      seq_frames   : (B_seq, SEQ_LEN, C, H, W) or None
+      seq_labels   : (B_seq,) or None
+      static_frames: (B_static, 1, C, H, W) or None
+      static_labels: (B_static,) or None
+    """
+    seq_frames, seq_labels = [], []
+    static_frames, static_labels = [], []
+
+    for item in batch:
+        if item["is_sequence"]:
+            seq_frames.append(item["frames"])
+            seq_labels.append(item["label"])
+        else:
+            static_frames.append(item["frames"])
+            static_labels.append(item["label"])
+
+    result = {
+        "seq_frames": torch.stack(seq_frames) if seq_frames else None,
+        "seq_labels": torch.stack(seq_labels) if seq_labels else None,
+        "static_frames": torch.stack(static_frames) if static_frames else None,
+        "static_labels": torch.stack(static_labels) if static_labels else None,
+    }
+    return result
+
+
+# ──────────────────────────────────────────────
+#  Convenience builder
+# ──────────────────────────────────────────────
+
+def build_dataloaders(
+    train_indices: list[int],
+    val_indices: list[int],
+    metadata_csv: str = METADATA_CSV,
+    processed_dir: str = PROCESSED_DIR,
+) -> tuple[DataLoader, DataLoader]:
+    """Return train and val DataLoaders from pre-computed index splits."""
+
+    # ── Separate datasets with different augmentation policies ──
+    train_dataset = DeepfakeDataset(
+        metadata_csv, processed_dir,
+        augmentation=_build_train_augmentation(),
+    )
+    val_dataset = DeepfakeDataset(
+        metadata_csv, processed_dir,
+        augmentation=_build_val_transform(),
+    )
+
+    train_subset = torch.utils.data.Subset(train_dataset, train_indices)
+    val_subset = torch.utils.data.Subset(val_dataset, val_indices)
+
+    # ── Handle Class Imbalance via Oversampling ──
+    # DFDC has ~15x more fake videos than real ones. We calculate weights
+    # for the training subset so each batch sees roughly 50% real / 50% fake.
+    train_labels = [train_dataset.samples[i]["label"] for i in train_indices]
+    class_counts = torch.bincount(torch.tensor(train_labels))
+    class_weights = 1.0 / class_counts.float()
+    sample_weights = [class_weights[lbl] for lbl in train_labels]
+    
+    sampler = WeightedRandomSampler(
+        weights=sample_weights,
+        num_samples=len(sample_weights),
+        replacement=True
+    )
+
+    train_loader = DataLoader(
+        train_subset,
+        batch_size=BATCH_SIZE,
+        sampler=sampler,               # Replaces shuffle=True
+        num_workers=NUM_WORKERS,
+        collate_fn=collate_fn,
+        pin_memory=True,
+    )
+    val_loader = DataLoader(
+        val_subset,
+        batch_size=BATCH_SIZE,
+        shuffle=False,
+        num_workers=NUM_WORKERS,
+        collate_fn=collate_fn,
+        pin_memory=True,
+    )
+    return train_loader, val_loader

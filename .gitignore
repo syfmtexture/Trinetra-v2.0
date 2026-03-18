@@ -1,0 +1,105 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+venv*/
+env/
+.env
+.venv/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Jupyter
+.ipynb_checkpoints/
+
+# PyTorch / Training artifacts
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+
+# Allow best model
+!*best_model*
+
+# Data / Datasets
+data/
+datasets/
+*.zip
+*.tar
+*.tar.gz
+*.csv
+*.json
+!requirements*.json
+
+# Logs & Outputs
+logs/
+runs/
+outputs/
+*.log
+*.out
+wandb/
+mlruns/
+
+# Preprocessed face data
+faces/
+preprocessed/
+*.npy
+*.npz
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+
+# Images & Videos (raw media)
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+
+# Gradio / Streamlit cache
+gradio_cached_examples/
+__pycache__/
+.streamlit/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+*.orig
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment variables / secrets
+.env
+.env.*
+secrets.yaml
+secrets.json
+
+# Coverage
+.coverage
+htmlcov/
+.pytest_cache/
