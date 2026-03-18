@@ -14,8 +14,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from infer import run_inference, InferenceResult
-from config import CHECKPOINT_DIR
+from src.inference.infer import run_inference, InferenceResult
+from src.core.config import CHECKPOINT_DIR
 
 
 # ──────────────────────────────────────────────
@@ -160,7 +160,7 @@ def analyze(file_obj):
         )
 
     file_path = file_obj if isinstance(file_obj, str) else file_obj.name
-    from config import MODEL_DIR
+    from src.core.config import MODEL_DIR
     ckpt = os.path.join(MODEL_DIR, "best_model.pt")
 
     if not os.path.isfile(ckpt):

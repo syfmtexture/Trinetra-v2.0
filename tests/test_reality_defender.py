@@ -4,10 +4,10 @@ import time
 import os
 import sys
 
-# Add current directory to path so we can import reality_defender
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Add project root to path so we can import src modules
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from reality_defender import KeyRotator, RDResult
+from src.inference.reality_defender import KeyRotator, RDResult
 
 class TestKeyRotator(unittest.TestCase):
     def test_round_robin(self):
@@ -46,11 +46,11 @@ class TestKeyRotator(unittest.TestCase):
         self.assertEqual(rotator.get_next(), (None, -1))
 
 class TestIntegration(unittest.TestCase):
-    @patch('reality_defender.RealityDefender')
+    @patch('src.inference.reality_defender.RealityDefender')
     @patch('os.path.getsize')
     @patch('os.path.exists')
     def test_analyze_flow(self, mock_exists, mock_getsize, mock_rd_class):
-        from reality_defender import analyze_with_rd
+        from src.inference.reality_defender import analyze_with_rd
         
         mock_exists.return_value = True
         mock_getsize.return_value = 1024 * 1024 # 1MB
@@ -69,13 +69,9 @@ class TestIntegration(unittest.TestCase):
             return {"status": "AUTHENTIC", "score": 0.05, "models": []}
         mock_instance.get_result = mock_get_result
         
-        # Since analyze_with_rd calls asyncio.run(_analyze_async), 
-        # it will use our patched mock_rd_class.
-        
-        # We need to ensure RD_API_KEYS is not empty for the rotator
-        with patch('reality_defender.RD_API_KEYS', ["test_key"]):
-            # We also need to re-initialize the singleton or mock the rotator
-            with patch('reality_defender.rotator.get_next', return_value=("test_key", 0)):
+        # Configure the environment to ensure RD_API_KEYS is not empty
+        with patch('src.inference.reality_defender.RD_API_KEYS', ["test_key"]):
+            with patch('src.inference.reality_defender.rotator.get_next', return_value=("test_key", 0)):
                 result = analyze_with_rd("test.jpg")
                 
                 self.assertEqual(result.status, "AUTHENTIC")

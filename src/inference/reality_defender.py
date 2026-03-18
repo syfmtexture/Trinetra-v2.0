@@ -19,7 +19,7 @@ from typing import Optional
 
 from realitydefender import RealityDefender, RealityDefenderError
 
-from config import (
+from src.core.config import (
     RD_API_KEYS,
     RD_MAX_AUDIO_SIZE_MB,
     RD_MAX_DOC_SIZE_MB,

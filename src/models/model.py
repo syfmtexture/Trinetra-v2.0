@@ -14,7 +14,7 @@ import torch
 import torch.nn as nn
 from torchvision import models
 
-from config import (
+from src.core.config import (
     DROPOUT,
     EFFICIENTNET_FEATURE_DIM,
     FREEZE_BLOCKS,

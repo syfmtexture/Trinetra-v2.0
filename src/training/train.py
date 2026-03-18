@@ -28,7 +28,7 @@ from torch.amp import GradScaler, autocast
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from tqdm import tqdm
 
-from config import (
+from src.core.config import (
     ACCUM_STEPS,
     BATCH_SIZE,
     CHECKPOINT_DIR,
@@ -42,8 +42,8 @@ from config import (
     VAL_SPLIT,
     WEIGHT_DECAY,
 )
-from dataset import DeepfakeDataset, build_dataloaders
-from model import DeepfakeDetector
+from src.data.dataset import DeepfakeDataset, build_dataloaders
+from src.models.model import DeepfakeDetector
 
 
 # ──────────────────────────────────────────────

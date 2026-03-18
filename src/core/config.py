@@ -13,7 +13,7 @@ load_dotenv()
 # ──────────────────────────────────────────────
 #  Paths
 # ──────────────────────────────────────────────
-PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 PROCESSED_DIR = os.path.join(PROJECT_ROOT, "processed_data")   # output of preprocess.py
 RAW_DATA_DIR = r"D:\download\dfdc_train_part_02"
 METADATA_CSV  = os.path.join(PROCESSED_DIR, "metadata.csv")

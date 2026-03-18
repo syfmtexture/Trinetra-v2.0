@@ -25,7 +25,7 @@ import torch.nn.functional as F
 from PIL import Image
 from torchvision import transforms
 
-from config import (
+from src.core.config import (
     MODEL_DIR,
     DEVICE,
     IMAGE_EXTENSIONS,
@@ -33,8 +33,8 @@ from config import (
     SEQ_LEN,
     VIDEO_EXTENSIONS,
 )
-from model import DeepfakeDetector
-from xai import (
+from src.models.model import DeepfakeDetector
+from src.inference.xai import (
     geometric_jitter_mapping,
     noise_residual_extraction,
     temporal_attention_rollout,
@@ -476,10 +476,10 @@ def run_inference(
 
     # ── Cloud: Reality Defender Analysis ──
     rd_result_dict = None
-    from config import RD_ENABLED
+    from src.core.config import RD_ENABLED
     if RD_ENABLED:
         try:
-            from reality_defender import analyze_with_rd
+            from src.inference.reality_defender import analyze_with_rd
             rd_res = analyze_with_rd(file_path)
             rd_result_dict = {
                 "status": rd_res.status,
