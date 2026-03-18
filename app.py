@@ -124,6 +124,10 @@ def _get_rd_human_summary(rd_result: dict | None) -> str:
     if not rd_result or rd_result.get("status") == "DISABLED":
         return "🛡️  **Cloud Analysis:** Analysis not performed (API key missing)."
         
+    if rd_result.get("status") == "SKIPPED":
+        reason = rd_result.get("error", "File format not supported by cloud layer.")
+        return f"⏭️  **Cloud Verification Skipped:** {reason}"
+
     if rd_result.get("status") == "ERROR":
         return f"🔴  **Cloud Analysis Error:** {rd_result.get('error', 'Unknown error')}"
 

@@ -110,7 +110,8 @@ async def _analyze_async(file_path: str) -> RDResult:
     # 1. Validation
     ext = os.path.splitext(file_path)[1].lower()
     if ext not in RD_SUPPORTED_EXTENSIONS:
-        return RDResult(error=f"Unsupported extension: {ext}", status="ERROR")
+        # Return SKIPPED so the UI doesn't throw a red error for videos
+        return RDResult(error=f"Unsupported format for cloud: {ext}", status="SKIPPED")
     
     size_mb = os.path.getsize(file_path) / (1024 * 1024)
     # Generic size check (RD limits vary by type)
