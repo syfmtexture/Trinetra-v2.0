@@ -4,6 +4,7 @@ import httpx
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
 from src.inference.infer import run_inference
+from src.inference.ai_summary import generate_ai_summary
 
 # Load environment variables
 load_dotenv()
@@ -22,6 +23,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("Trinetra.WhatsAppBot")
 
 app = Flask(__name__)
+
+# Deduplication: track processed message IDs to avoid duplicate responses
+_processed_messages = set()
 
 def send_whatsapp_message(to, text):
     """Sends a text message via WhatsApp Cloud API."""
@@ -102,8 +106,15 @@ def handle_webhook():
                     messages = value.get("messages", [])
                     
                     for msg in messages:
+                        msg_id = msg.get("id")
                         sender = msg.get("from")
                         msg_type = msg.get("type")
+                        
+                        # Skip already-processed messages
+                        if msg_id in _processed_messages:
+                            logger.info(f"Skipping duplicate message {msg_id}")
+                            continue
+                        _processed_messages.add(msg_id)
                         
                         logger.info(f"New message from {sender} (type: {msg_type})")
                         
@@ -159,10 +170,15 @@ def handle_webhook():
                                     if models:
                                         response_text += "\n📊 *Model Details*:\n"
                                         for m in models:
-                                            m_name = m.get("model_name", "Unknown")
+                                            m_name = m.get("model_name") or m.get("name") or m.get("model") or "Model"
                                             m_score = m.get("score", 0)
                                             m_label = "Fake" if m_score > 0.5 else "Real"
                                             response_text += f"• {m_name}: {m_score*100:.1f}% ({m_label})\n"
+                            
+                            # 3. AI Summary (Groq)
+                            ai_summary = generate_ai_summary(result)
+                            if ai_summary:
+                                response_text += f"\n🧠 *AI Forensic Summary*:\n{ai_summary}\n"
                             
                             response_text += f"\n🆔 Request ID: {result.rd_result.get('request_id') if result.rd_result else 'N/A'}"
                             
