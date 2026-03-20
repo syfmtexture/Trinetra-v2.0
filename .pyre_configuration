@@ -1,0 +1,9 @@
+{
+  "source_directories": [
+    "src",
+    "."
+  ],
+  "search_path": [
+    "C:\\Program Files\\WindowsApps\\PythonSoftwareFoundation.Python.3.13_3.13.752.0_x64__qbz5n2kfra8p0\\Lib\\site-packages"
+  ]
+}

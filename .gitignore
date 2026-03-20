@@ -28,9 +28,6 @@ checkpoints/
 *.ckpt
 *.onnx
 
-# Allow best model
-!*best_model*
-
 # Data / Datasets
 data/
 datasets/

@@ -84,7 +84,7 @@ class KeyRotator:
                 self._index += 1
                 key = self._keys[idx]
                 
-                if key not in self._blacklist:
+                if key and key not in self._blacklist:
                     return key, idx
             
             return None, -1
@@ -93,7 +93,8 @@ class KeyRotator:
         """Temporarily remove a key from rotation."""
         with self._lock:
             self._blacklist[key] = time.time() + duration
-            logger.warning(f"Key rotated out: '{key[:8]}...' blacklisted for {duration}s (Rate Limit).")
+            key_preview = key[:8] if key else "unknown"
+            logger.warning(f"Key rotated out: '{key_preview}...' blacklisted for {duration}s (Rate Limit).")
 
 # Singleton instance
 rotator = KeyRotator(RD_API_KEYS)
@@ -192,14 +193,24 @@ async def _analyze_async(file_path: str) -> RDResult:
 
 def analyze_with_rd(file_path: str) -> RDResult:
     """
-    Main entry point for synchronous callers (like Gradio callbacks).
-    Wraps the async logic and handles timeouts.
+    Main entry point for synchronous callers (like Gradio or FastAPI).
+    Runs the async analysis in a separate thread to avoid conflicts with
+    existing event loops (e.g., when called from within FastAPI).
     """
+    from concurrent.futures import ThreadPoolExecutor
+
+    def _threaded_run():
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            return loop.run_until_complete(asyncio.wait_for(_analyze_async(file_path), timeout=RD_TIMEOUT))
+        finally:
+            loop.close()
+
     try:
-        return asyncio.run(asyncio.wait_for(_analyze_async(file_path), timeout=RD_TIMEOUT))
-    except asyncio.TimeoutError:
-        logger.error(f"Reality Defender analysis timed out after {RD_TIMEOUT}s")
-        return RDResult(error=f"Analysis timed out after {RD_TIMEOUT}s", status="ERROR")
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(_threaded_run)
+            return future.result()
     except Exception as e:
         logger.error(f"Analysis fatal error: {e}")
         return RDResult(error=str(e), status="ERROR")

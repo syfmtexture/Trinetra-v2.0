@@ -1,0 +1,313 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;600;700&display=swap');
+
+/**
+ * content.css — Trinetra extension UI styling
+ * Theme: Cyber-Forensic HUD
+ */
+
+:root {
+    --bg-dark: rgba(7, 10, 19, 0.85);
+    --border-glow: rgba(0, 243, 255, 0.3);
+    --text-main: #e0f2fe;
+    --text-muted: #7dd3fc;
+    --fake-color: #ff003c;
+    --real-color: #00f3ff;
+    --font-head: 'Orbitron', sans-serif;
+    --font-body: 'Rajdhani', sans-serif;
+}
+
+.trinetra-selection-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%);
+    z-index: 2147483647;
+    cursor: crosshair;
+    backdrop-filter: saturate(120%) blur(4px);
+    -webkit-backdrop-filter: saturate(120%) blur(4px);
+}
+
+.trinetra-selection-box {
+    position: fixed;
+    border: 1px solid var(--real-color);
+    background: rgba(0, 243, 255, 0.05);
+    box-shadow: 0 0 15px var(--border-glow), inset 0 0 20px rgba(0, 243, 255, 0.1);
+    pointer-events: none;
+    z-index: 2147483647;
+}
+
+/* Scanner line animation inside the selection box while scanning */
+.trinetra-selection-box::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--real-color);
+    box-shadow: 0 0 10px var(--real-color);
+    animation: scanline 2s linear infinite;
+    display: none;
+}
+
+.trinetra-selection-box.scanning::after {
+    display: block;
+}
+
+@keyframes scanline {
+    0% { top: 0; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+}
+
+/* Toast */
+.trinetra-toast {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    
+    background: var(--bg-dark);
+    border: 1px solid var(--border-glow);
+    box-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
+    
+    color: var(--real-color);
+    padding: 12px 30px;
+    border-radius: 4px;
+    font-family: var(--font-head);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    z-index: 2147483647;
+    transition: transform 0.5s cubic-bezier(0.2, 1, 0.3, 1);
+    backdrop-filter: blur(10px);
+}
+
+.trinetra-toast.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+.trinetra-toast.loading {
+    border-color: var(--real-color);
+    color: var(--real-color);
+    animation: pulse-border 1.5s infinite;
+}
+
+@keyframes pulse-border {
+    0%, 100% { box-shadow: 0 0 10px rgba(0, 243, 255, 0.2); }
+    50% { box-shadow: 0 0 25px rgba(0, 243, 255, 0.6); }
+}
+
+/* Modal HUD */
+.trinetra-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2147483647;
+    animation: fade-in-bg 0.4s ease-out;
+}
+
+@keyframes fade-in-bg {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.trinetra-modal-content {
+    background: linear-gradient(135deg, rgba(7,10,19,0.95) 0%, rgba(13,18,30,0.9) 100%);
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.05);
+    width: 500px;
+    padding: 30px;
+    position: relative;
+    color: var(--text-main);
+    font-family: var(--font-body);
+    clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+    transform: scale(0.9) translateY(20px);
+    animation: hud-pop 0.5s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+}
+
+.trinetra-modal-content::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px) 0 0 / 20px 20px,
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px) 0 0 / 20px 20px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+@keyframes hud-pop {
+    to { transform: scale(1) translateY(0); }
+}
+
+.trinetra-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid rgba(255,255,255,0.1);
+    padding-bottom: 15px;
+    margin-bottom: 25px;
+    position: relative;
+    z-index: 1;
+}
+
+.trinetra-brand {
+    font-family: var(--font-head);
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255,255,255,0.5);
+}
+
+.trinetra-brand span {
+    color: var(--real-color);
+}
+
+.trinetra-latency {
+    font-family: var(--font-head);
+    font-size: 12px;
+    color: var(--real-color);
+    background: rgba(0, 243, 255, 0.1);
+    padding: 4px 10px;
+    border: 1px solid rgba(0, 243, 255, 0.3);
+}
+
+.trinetra-verdict-main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.05);
+    margin-bottom: 25px;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+}
+
+/* Dynamic glow based on status */
+.trinetra-verdict-main.status-fake {
+    border-color: var(--fake-color);
+    box-shadow: inset 0 0 30px rgba(255, 0, 60, 0.15);
+}
+.trinetra-verdict-main.status-real {
+    border-color: var(--real-color);
+    box-shadow: inset 0 0 30px rgba(0, 243, 255, 0.15);
+}
+
+.trinetra-verdict-label {
+    font-family: var(--font-head);
+    font-size: 42px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+.status-fake .trinetra-verdict-label {
+    color: var(--fake-color);
+    text-shadow: 0 0 20px rgba(255,0,60,0.6);
+}
+.status-real .trinetra-verdict-label {
+    color: var(--real-color);
+    text-shadow: 0 0 20px rgba(0,243,255,0.6);
+}
+
+.trinetra-verdict-sub {
+    font-family: var(--font-head);
+    font-size: 10px;
+    color: #fff;
+    letter-spacing: 2px;
+    opacity: 0.6;
+}
+
+.trinetra-results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 25px;
+    position: relative;
+    z-index: 1;
+}
+
+.trinetra-result-cell {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-left: 3px solid rgba(255,255,255,0.2);
+}
+
+.trinetra-label {
+    font-family: var(--font-head);
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.trinetra-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.trinetra-value.fake-text { color: var(--fake-color); }
+.trinetra-value.real-text { color: var(--real-color); }
+.trinetra-value.muted { color: #555; font-style: italic; }
+
+.trinetra-summary {
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--text-main);
+    background: rgba(0,0,0,0.5);
+    padding: 20px;
+    border: 1px dashed rgba(255,255,255,0.2);
+    position: relative;
+    z-index: 1;
+    margin-bottom: 20px;
+}
+
+.trinetra-footer {
+    font-family: var(--font-head);
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: right;
+    letter-spacing: 1px;
+    opacity: 0.5;
+    position: relative;
+    z-index: 1;
+}
+
+.trinetra-close {
+    position: absolute;
+    top: 25px;
+    right: 25px;
+    font-family: var(--font-head);
+    font-size: 20px;
+    color: rgba(255,255,255,0.5);
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.2s;
+}
+
+.trinetra-close:hover {
+    color: #fff;
+    transform: rotate(90deg);
+}
