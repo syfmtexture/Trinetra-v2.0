@@ -3,7 +3,7 @@ import logging
 import httpx
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
-from src.inference.reality_defender import analyze_with_rd
+from src.inference.infer import run_inference
 
 # Load environment variables
 load_dotenv()
@@ -126,22 +126,45 @@ def handle_webhook():
                                 send_whatsapp_message(sender, "Sorry, I couldn't download the file. Please try again.")
                                 continue
                             
-                            # Run Analysis
-                            result = analyze_with_rd(file_path)
+                            # Run Analysis (consolidated local + cloud)
+                            result = run_inference(file_path)
                             
-                            # Format Response
-                            if result.status == "SKIPPED":
-                                response_text = f"🚨 {result.error}"
-                            elif result.status == "ERROR":
-                                response_text = f"❌ Analysis Error: {result.error}"
-                            else:
-                                color = "🟢" if result.status == "AUTHENTIC" else "🔴" if result.status == "MANIPULATED" else "🟡"
-                                response_text = (
-                                    f"--- Trinetra Analysis Result ---\n"
-                                    f"Status: {color} {result.status}\n"
-                                    f"Manipulation Probability: {result.overall_score * 100:.1f}%\n"
-                                    f"Request ID: {result.request_id}\n"
-                                )
+                            # 1. Local Model Result
+                            local_color = "🟢" if result.label == "REAL" else "🔴"
+                            response_text = (
+                                f"🔍 *Trinetra Forensic Report*\n\n"
+                                f"🤖 *Local AI Analysis*:\n"
+                                f"Status: {local_color} {result.label}\n"
+                                f"Confidence: {result.fake_probability * 100:.2f}%\n\n"
+                            )
+
+                            # 2. Reality Defender Cloud Result
+                            rd = result.rd_result
+                            if rd:
+                                if rd.get("status") == "ERROR":
+                                    response_text += f"☁️ *Cloud Analysis*: ❌ {rd.get('error')}\n"
+                                elif rd.get("status") == "SKIPPED":
+                                    response_text += f"☁️ *Cloud Analysis*: ⏭️ {rd.get('error')}\n"
+                                else:
+                                    rd_status = rd.get("status")
+                                    rd_color = "🟢" if rd_status == "AUTHENTIC" else "🔴" if rd_status == "MANIPULATED" else "🟡"
+                                    response_text += (
+                                        f"☁️ *Cloud Analysis (Reality Defender)*:\n"
+                                        f"Verdict: {rd_color} {rd_status}\n"
+                                        f"Overall Score: {rd.get('score', 0) * 100:.1f}%\n"
+                                    )
+                                    
+                                    # Detailed Model Breakdown
+                                    models = rd.get("models", [])
+                                    if models:
+                                        response_text += "\n📊 *Model Details*:\n"
+                                        for m in models:
+                                            m_name = m.get("model_name", "Unknown")
+                                            m_score = m.get("score", 0)
+                                            m_label = "Fake" if m_score > 0.5 else "Real"
+                                            response_text += f"• {m_name}: {m_score*100:.1f}% ({m_label})\n"
+                            
+                            response_text += f"\n🆔 Request ID: {result.rd_result.get('request_id') if result.rd_result else 'N/A'}"
                             
                             send_whatsapp_message(sender, response_text)
                             
