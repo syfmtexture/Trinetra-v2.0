@@ -69,6 +69,12 @@ preprocessed/
 *.bmp
 *.tiff
 
+# Allow project assets (logo, etc.)
+!src/assets/*.png
+!src/assets/*.jpg
+!src/assets/*.jpeg
+!src/assets/*.svg
+
 # Gradio / Streamlit cache
 gradio_cached_examples/
 __pycache__/
