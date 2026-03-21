@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #F8F9FA;
+  --foreground: #212529;
+  
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --card-border: rgba(0, 0, 0, 0.1);
+  --card-blur: blur(20px);
+  
+  --accent-brand: #FF6B00;
+  --accent-red: #FA5252;
+  --accent-green: #40C057;
+  --accent-purple: #7950F2;
+  
+  --muted: #868E96;
+  --muted-dark: #DEE2E6;
+  
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+  
+  --font-inter: 'Inter', sans-serif;
+  --font-syncopate: 'Syncopate', sans-serif;
+  --font-mono: 'Space Mono', 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+@layer base {
+  body {
+    @apply text-foreground;
+    font-family: var(--font-inter);
+    background: linear-gradient(145deg, #FFFFFF 0%, #F4F6FB 40%, #FFF3EC 100%);
+    background-attachment: fixed;
+  }
+
+  h1, h2, h3, .heading-system {
+    font-family: var(--font-syncopate);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    background: var(--card-bg);
+    backdrop-filter: var(--card-blur);
+    -webkit-backdrop-filter: var(--card-blur);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--glass-shadow);
+    @apply rounded-xl;
+  }
+
+  .glass-button {
+    @apply relative overflow-hidden px-6 py-2 rounded-lg font-semibold transition-all duration-300;
+    background: rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .glass-button:hover {
+    background: rgba(0, 0, 0, 0.08);
+    @apply shadow-lg scale-[1.02];
+  }
+
+  .glass-button.active {
+    background: var(--accent-brand);
+    color: #FFF;
+    border-color: var(--accent-brand);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--muted-dark);
+    @apply rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--muted);
+  }
+}
