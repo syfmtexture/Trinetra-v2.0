@@ -32,7 +32,6 @@ from src.core.config import (
     IMG_SIZE,
     SEQ_LEN,
     VIDEO_EXTENSIONS,
-    AUDIO_EXTENSIONS,
 )
 from src.models.model import DeepfakeDetector
 from src.inference.xai import (
@@ -298,7 +297,6 @@ def run_inference(
     file_path: str,
     checkpoint_path: str | None = None,
     *,
-    enable_rd: bool = True,
     _model_cache: dict = {},
 ) -> InferenceResult:
     """
@@ -479,7 +477,7 @@ def run_inference(
     # ── Cloud: Reality Defender Analysis ──
     rd_result_dict = None
     from src.core.config import RD_ENABLED
-    if RD_ENABLED and enable_rd:
+    if RD_ENABLED:
         try:
             from src.inference.reality_defender import analyze_with_rd
             rd_res = analyze_with_rd(file_path)
@@ -528,63 +526,6 @@ def run_inference(
         geometric_jitter=geo_jitter,
         rd_result=rd_result_dict,
         forensic_log=forensic_log,
-    )
-
-
-def analyze_audio(file_path: str) -> InferenceResult:
-    """
-    Run cloud-only deepfake detection on an audio file via Reality Defender.
-    """
-    from src.core.config import RD_ENABLED, AUDIO_EXTENSIONS
-    
-    ext = os.path.splitext(file_path)[1].lower()
-    if ext not in AUDIO_EXTENSIONS:
-        raise ValueError(f"Unsupported audio extension: {ext}")
-        
-    rd_result_dict = None
-    if RD_ENABLED:
-        try:
-            from src.inference.reality_defender import analyze_with_rd
-            rd_res = analyze_with_rd(file_path)
-            rd_result_dict = {
-                "status": rd_res.status,
-                "score": round(rd_res.overall_score, 4),
-                "models": rd_res.models,
-                "request_id": rd_res.request_id,
-                "key_used_idx": rd_res.key_used_index,
-                "attempts": rd_res.attempts,
-                "latency_ms": round(rd_res.latency_ms, 2),
-                "error": rd_res.error
-            }
-        except Exception as e:
-            rd_result_dict = {"status": "ERROR", "error": f"Integration error: {e}"}
-    else:
-        rd_result_dict = {"status": "DISABLED", "error": "Reality Defender API keys not configured."}
-
-    # Determine label/prob from RD
-    status = rd_result_dict.get("status", "ERROR")
-    score = rd_result_dict.get("score", 0.0)
-    
-    if status in ["FAKE", "MANIPULATED", "SUSPICIOUS"]:
-        label = "FAKE"
-        fake_prob = score
-    elif status == "AUTHENTIC":
-        label = "REAL"
-        fake_prob = score
-    else:
-        label = "UNKNOWN"
-        fake_prob = 0.5
-
-    return InferenceResult(
-        fake_probability=round(float(fake_prob), 6),
-        label=label,
-        rd_result=rd_result_dict,
-        forensic_log={
-            "inference_latency_ms": rd_result_dict.get("latency_ms", 0) if rd_result_dict else 0,
-            "classification_label": label,
-            "reality_defender": rd_result_dict,
-            "media_type": "audio"
-        }
     )
 
 

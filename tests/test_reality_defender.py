@@ -79,33 +79,5 @@ class TestIntegration(unittest.TestCase):
                 self.assertEqual(result.request_id, "req_123")
                 self.assertIsNone(result.error)
 
-    @patch('src.inference.reality_defender.RealityDefender')
-    @patch('os.path.getsize')
-    @patch('os.path.exists')
-    def test_analyze_audio_flow(self, mock_exists, mock_getsize, mock_rd_class):
-        from src.inference.infer import analyze_audio
-        
-        mock_exists.return_value = True
-        mock_getsize.return_value = 5 * 1024 * 1024 # 5MB
-        
-        mock_instance = mock_rd_class.return_value
-        
-        async def mock_upload(**kwargs):
-            return {"request_id": "audio_req_456"}
-        mock_instance.upload = mock_upload
-        
-        async def mock_get_result(req_id):
-            return {"status": "MANIPULATED", "score": 0.92, "models": [{"name": "audio-deepfake-v1", "status": "MANIPULATED"}]}
-        mock_instance.get_result = mock_get_result
-        
-        with patch('src.inference.reality_defender.RD_API_KEYS', ["test_key"]):
-            with patch('src.inference.reality_defender.rotator.get_next', return_value=("test_key", 0)):
-                result = analyze_audio("test.mp3")
-                
-                self.assertEqual(result.label, "FAKE")
-                self.assertEqual(result.rd_result["status"], "MANIPULATED")
-                self.assertEqual(result.rd_result["score"], 0.92)
-                self.assertEqual(result.forensic_log["media_type"], "audio")
-
 if __name__ == '__main__':
     unittest.main()

@@ -1,5 +1,4 @@
-# <p align="center"><img src="src/assets/logo.png" width="200" alt="Trinetra Logo"></p>
-# <p align="center">Trinetra — Deepfake Forensic Analyzer</p>
+# Trinetra — Deepfake Forensic Analyzer
 
 Trinetra is a comprehensive hybrid deepfake detection system that combines an optimized local AI model (EfficientNet-B4 + LSTM) with cloud-based verification (Reality Defender). It features a full forensic suite providing temporal anomaly detection, Explainable AI (XAI) using Grad-CAM, error level analysis, and geometric landmark jitter metrics.
 
