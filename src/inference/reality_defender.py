@@ -154,12 +154,29 @@ async def _analyze_async(file_path: str) -> RDResult:
                     # Poll for result
                     # Note: rd.get_result usually implements internal polling
                     result_data = await rd.get_result(req_id)
+                    models_data = result_data.get("models", [])
                     
+                    # Calculate aggregated score and status from individual models
+                    # to prevent hallucinations when only a minority flag as manipulated.
+                    if models_data:
+                        valid_scores = [m.get("score", 0.0) for m in models_data if "score" in m]
+                        calculated_score = sum(valid_scores) / len(valid_scores) if valid_scores else 0.0
+                        
+                        if calculated_score >= 0.5:
+                            calculated_status = "MANIPULATED"
+                        elif calculated_score >= 0.4:
+                            calculated_status = "SUSPICIOUS"
+                        else:
+                            calculated_status = "AUTHENTIC"
+                    else:
+                        calculated_score = result_data.get("score", 0.0)
+                        calculated_status = result_data.get("status", "INCONCLUSIVE")
+
                     t_end = time.perf_counter()
                     return RDResult(
-                        status=result_data.get("status", "INCONCLUSIVE"),
-                        overall_score=result_data.get("score", 0.0),
-                        models=result_data.get("models", []),
+                        status=calculated_status,
+                        overall_score=calculated_score,
+                        models=models_data,
                         request_id=req_id,
                         key_used_index=key_idx,
                         attempts=attempts,
