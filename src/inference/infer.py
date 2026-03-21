@@ -298,6 +298,7 @@ def run_inference(
     file_path: str,
     checkpoint_path: str | None = None,
     *,
+    enable_rd: bool = True,
     _model_cache: dict = {},
 ) -> InferenceResult:
     """
@@ -478,7 +479,7 @@ def run_inference(
     # ── Cloud: Reality Defender Analysis ──
     rd_result_dict = None
     from src.core.config import RD_ENABLED
-    if RD_ENABLED:
+    if RD_ENABLED and enable_rd:
         try:
             from src.inference.reality_defender import analyze_with_rd
             rd_res = analyze_with_rd(file_path)

@@ -20,17 +20,19 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 chrome.action.onClicked.addListener(async (tab) => {
+  console.log("Trinetra Icon Clicked on Tab:", tab.id);
   if (tab.url.startsWith("chrome://") || tab.url.startsWith("https://chrome.google.com/webstore")) {
     console.error("Trinetra cannot run on Chrome system pages.");
     return;
   }
 
   try {
-    // Try sending the message first
-    await chrome.tabs.sendMessage(tab.id, { action: "toggle-selection" });
+    // 1. Try sending message to existing content script
+    await chrome.tabs.sendMessage(tab.id, { action: "open-panel" });
+    console.log("Panel opened via existing content script.");
   } catch (error) {
-    // If it fails, the content script likely isn't injected yet (e.g., page not refreshed)
-    console.log("Content script not found, injecting now...");
+    // 2. If it fails, inject scripts (may happen if content script isn't running or page just loaded)
+    console.log("Content script not responding, attempting injection...");
     try {
       await chrome.scripting.insertCSS({
         target: { tabId: tab.id },
@@ -40,12 +42,15 @@ chrome.action.onClicked.addListener(async (tab) => {
         target: { tabId: tab.id },
         files: ["content.js"]
       });
-      // Give it a tiny bit of time to initialize, then send message again
-      setTimeout(async () => {
-         await chrome.tabs.sendMessage(tab.id, { action: "toggle-selection" });
-      }, 150);
+      
+      // 3. Small delay to allow content.js to register its listener
+      setTimeout(() => {
+        chrome.tabs.sendMessage(tab.id, { action: "open-panel" })
+          .then(() => console.log("Panel opened after injection."))
+          .catch(err => console.error("Final messaging attempt failed:", err));
+      }, 250);
     } catch (injectError) {
-      console.error("Failed to inject Trinetra scripts:", injectError);
+      console.error("Critical failure during Trinetra injection/messaging:", injectError);
     }
   }
 });

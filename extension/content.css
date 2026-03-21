@@ -1,198 +1,314 @@
-/* content.css — Clean Floating Widget Theme */
+/* content.css — Trinetra: Warm Minimal Theme
+ * 
+ * Design language: clean, warm, organic.
+ * Inspired by the logo's flowing curves and warm palette.
+ * Cream canvas · Purple & orange accents · Generous space.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,400&display=swap');
 
 :root {
-    --bg-primary: #ffffff;
-    --bg-secondary: #f9fafb;
-    --text-main: #111827;
-    --text-muted: #6b7280;
-    --border-light: #e5e7eb;
-    --accent: #3b82f6;
-    --fake-color: #ef4444;
-    --real-color: #10b981;
-    --shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-    --font-ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    /* Canvas */
+    --bg-canvas: #FFFBF5;
+    --bg-surface: #FFF7EE;
+    --bg-muted: #F5EDE3;
+    --bg-sunken: #EDE4D8;
+
+    /* Text - Darker for better contrast */
+    --text-primary: #1A1325;
+    --text-secondary: #564D66;
+    --text-tertiary: #8A7E99;
+
+    /* Accents from logo */
+    --purple: #6B3AF5;
+    --purple-soft: rgba(107, 58, 245, 0.08);
+    --purple-mid: rgba(107, 58, 245, 0.15);
+    --orange: #F57C20;
+    --orange-soft: rgba(245, 124, 32, 0.08);
+    --gold: #FFAA00;
+
+    /* Semantics */
+    --fake-color: #E8453C;
+    --fake-soft: #FEF0EF;
+    --fake-border: #FACBC8;
+    --real-color: #1EA672;
+    --real-soft: #EFFAF4;
+    --real-border: #B4E9CF;
+
+    /* Radius */
+    --r-sm: 8px;
+    --r-md: 14px;
+    --r-lg: 20px;
+    --r-xl: 24px;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 3px rgba(45, 36, 56, 0.04);
+    --shadow-md: 0 4px 16px rgba(45, 36, 56, 0.06);
+    --shadow-widget: 0 12px 48px rgba(45, 36, 56, 0.10), 0 0 0 1px rgba(107, 58, 245, 0.06);
+
+    /* Font */
+    --font: 'DM Sans', system-ui, -apple-system, sans-serif;
 }
 
-/* Base selection - No Blur */
+/* ─── Selection Overlay ─── */
 .trinetra-selection-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.15); /* Very light dim, no blur */
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(45, 36, 56, 0.12);
     z-index: 2147483647;
     cursor: crosshair;
 }
 
 .trinetra-selection-box {
     position: fixed;
-    border: 2px solid var(--accent);
-    background: rgba(59, 130, 246, 0.1);
+    border: 2.5px solid var(--orange);
+    background: var(--orange-soft);
     pointer-events: none;
     z-index: 2147483647;
+    border-radius: 6px;
+    transition: border-color 0.2s;
 }
 
 .trinetra-selection-box.scanning {
-    animation: scan-pulse 1s infinite alternate;
+    animation: trin-scan 1.2s ease-in-out infinite alternate;
 }
 
-@keyframes scan-pulse {
-    from { background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.5); }
-    to { background: rgba(59, 130, 246, 0.3); border-color: rgba(59, 130, 246, 1); }
+@keyframes trin-scan {
+    0%   { border-color: var(--orange); background: var(--orange-soft); }
+    100% { border-color: var(--purple); background: var(--purple-soft); }
 }
 
-/* Toast */
+/* ─── Toast ─── */
 .trinetra-toast {
     position: fixed;
-    bottom: 30px;
+    bottom: 28px;
     left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background: var(--text-main);
+    transform: translateX(-50%) translateY(80px);
+    background: var(--text-primary);
     color: #fff;
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-family: var(--font-ui);
-    font-size: 14px;
+    padding: 11px 22px;
+    border-radius: 100px;
+    font-family: var(--font);
+    font-size: 13px;
     font-weight: 500;
     z-index: 2147483647;
-    transition: transform 0.4s ease, opacity 0.4s ease;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+    box-shadow: 0 8px 24px rgba(45, 36, 56, 0.18);
     opacity: 0;
 }
 
 .trinetra-toast.show {
     transform: translateX(-50%) translateY(0);
-    opacity: 1;
+    opacity: 1 !important;
 }
 
+.trinetra-toast { color: #FFFFFF !important; }
+
 .trinetra-toast.loading {
-    border-left: 3px solid var(--accent);
+    background: linear-gradient(135deg, #3D2366, #5A2D82);
 }
 
 .trinetra-toast.error {
-    border-left: 3px solid var(--fake-color);
+    background: #FF3B30 !important;
 }
 
-/* Floating Window Widget */
+/* ─── Widget ─── */
 .trinetra-widget {
     position: fixed;
     top: 20px;
     right: 20px;
     width: 380px;
-    background: var(--bg-primary);
-    border-radius: 12px;
-    box-shadow: var(--shadow);
+    background: var(--bg-canvas);
+    border-radius: var(--r-xl);
+    box-shadow: var(--shadow-widget);
     z-index: 2147483647;
-    font-family: var(--font-ui);
-    color: var(--text-main);
+    font-family: var(--font);
+    color: #1A1325 !important;
+    opacity: 1 !important;
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--border-light);
-    animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: trin-open 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes slide-in {
-    from { opacity: 0; transform: translateX(20px); }
-    to { opacity: 1; transform: translateX(0); }
+@keyframes trin-open {
+    from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* ─── Header ─── */
 .trinetra-widget-header {
-    background: var(--bg-secondary);
-    padding: 12px 16px;
+    padding: 16px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--border-light);
     cursor: grab;
     user-select: none;
+    background: linear-gradient(135deg, var(--bg-canvas) 0%, var(--bg-surface) 100%);
+    border-bottom: 1px solid var(--bg-muted);
 }
 
-.trinetra-widget-header:active {
-    cursor: grabbing;
-}
+.trinetra-widget-header:active { cursor: grabbing; }
 
 .trinetra-widget-title {
-    font-weight: 600;
-    font-size: 14px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.05em;
+    color: #1A1325;
+}
+
+.trinetra-widget-title img.trinetra-logo {
+    width: 28px;
+    height: 28px;
 }
 
 .trinetra-widget-close {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 16px;
+    color: var(--text-tertiary);
     cursor: pointer;
-    font-size: 20px;
-    color: var(--text-muted);
-    line-height: 1;
+    transition: all 0.15s;
+    background: transparent;
 }
 
 .trinetra-widget-close:hover {
-    color: var(--text-main);
+    background: var(--bg-muted);
+    color: var(--text-primary);
 }
 
+/* ─── Tabs ─── */
 .trinetra-widget-tabs {
     display: flex;
-    border-bottom: 1px solid var(--border-light);
-    background: #fff;
+    gap: 2px;
+    padding: 6px 16px;
+    background: var(--bg-canvas);
+    border-bottom: 1px solid var(--bg-muted);
 }
 
 .trinetra-tab {
     flex: 1;
     text-align: center;
-    padding: 10px 0;
-    font-size: 13px;
+    padding: 8px 0;
+    font-size: 12px;
     font-weight: 500;
-    color: var(--text-muted);
+    color: var(--text-tertiary);
     cursor: pointer;
-    border-bottom: 2px solid transparent;
+    border-radius: var(--r-sm);
+    transition: all 0.15s;
+}
+
+.trinetra-tab:hover {
+    color: var(--text-secondary);
+    background: var(--bg-surface);
 }
 
 .trinetra-tab.active {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
+    color: var(--purple);
+    background: var(--purple-soft);
+    font-weight: 700;
 }
 
+/* ─── Tab Content ─── */
+.trinetra-tab-content {
+    display: none;
+}
+.trinetra-tab-content.active {
+    display: block;
+}
+
+/* ─── Body ─── */
 .trinetra-widget-body {
     padding: 20px;
-    max-height: 450px;
+    max-height: 460px;
     overflow-y: auto;
+    background: var(--bg-canvas);
 }
 
+.trinetra-widget-body::-webkit-scrollbar { width: 3px; }
+.trinetra-widget-body::-webkit-scrollbar-track { background: transparent; }
+.trinetra-widget-body::-webkit-scrollbar-thumb {
+    background: var(--bg-sunken);
+    border-radius: 3px;
+}
+
+/* ─── Verdict ─── */
 .trinetra-verdict-box {
     text-align: center;
-    padding: 24px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    background: var(--bg-secondary);
+    padding: 28px 20px 22px;
+    border-radius: var(--r-lg);
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+}
+
+.trinetra-verdict-box .trinetra-verdict-icon {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 10px;
+    display: block;
 }
 
 .trinetra-verdict-box.status-fake {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
+    background: var(--fake-soft);
+    border: 1.5px solid var(--fake-border);
 }
 
 .trinetra-verdict-box.status-real {
-    background: #ecfdf5;
-    border: 1px solid #a7f3d0;
+    background: var(--real-soft);
+    border: 1.5px solid var(--real-border);
 }
 
 .trinetra-verdict-label {
-    font-size: 32px;
-    font-weight: 800;
-    margin-bottom: 4px;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
 }
 
 .status-fake .trinetra-verdict-label { color: var(--fake-color); }
 .status-real .trinetra-verdict-label { color: var(--real-color); }
 
 .trinetra-verdict-sub {
-    font-size: 12px;
-    color: var(--text-muted);
+    font-size: 11px;
+    color: var(--text-tertiary);
     font-weight: 500;
+    margin-top: 2px;
+    letter-spacing: 0.04em;
 }
 
+/* Confidence bar */
+.trinetra-confidence-bar-track {
+    width: 60%;
+    margin: 14px auto 0;
+    height: 5px;
+    background: var(--bg-muted);
+    border-radius: 100px;
+    overflow: hidden;
+}
+
+.trinetra-confidence-bar-fill {
+    height: 100%;
+    border-radius: 100px;
+    transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.trinetra-confidence-bar-fill.fill-fake {
+    background: linear-gradient(90deg, var(--orange), var(--fake-color));
+}
+
+.trinetra-confidence-bar-fill.fill-real {
+    background: linear-gradient(90deg, var(--real-color), #6EEEAD);
+}
+
+/* ─── Detail Rows ─── */
 .trinetra-details-grid {
     display: flex;
     flex-direction: column;
@@ -203,31 +319,239 @@
 .trinetra-detail-row {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     padding: 12px 14px;
-    background: var(--bg-secondary);
-    border-radius: 6px;
+    background: var(--bg-surface);
+    border-radius: var(--r-md);
     font-size: 13px;
+    transition: background 0.12s;
+}
+
+.trinetra-detail-row:hover {
+    background: var(--bg-muted);
 }
 
 .trinetra-detail-label {
-    color: var(--text-muted);
+    color: var(--text-secondary);
     font-weight: 500;
+    font-size: 12.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.trinetra-detail-label img {
+    width: 18px;
+    height: 18px;
+    opacity: 0.7;
 }
 
 .trinetra-detail-value {
     font-weight: 600;
+    font-size: 13px;
 }
 
 .trinetra-detail-value.fake-text { color: var(--fake-color); }
 .trinetra-detail-value.real-text { color: var(--real-color); }
 
+/* ─── Summary ─── */
 .trinetra-summary-text {
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    background: var(--bg-surface);
+    padding: 14px 16px;
+    border-radius: var(--r-md);
+    border-left: 3px solid var(--purple);
+}
+
+/* ─── Settings Panel ─── */
+.trinetra-settings-panel {
+    padding: 10px 4px;
+}
+
+.trinetra-setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--bg-muted);
+}
+
+.trinetra-setting-item:last-child {
+    border-bottom: none;
+}
+
+.trinetra-setting-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.trinetra-setting-desc {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    line-height: 1.4;
+    padding-right: 20px;
+}
+
+/* ─── Toggle Switch ─── */
+.trinetra-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.trinetra-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.trinetra-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: var(--bg-sunken);
+    transition: .3s;
+    border-radius: 24px;
+}
+
+.trinetra-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+input:checked + .trinetra-slider {
+    background-color: var(--purple);
+}
+
+input:checked + .trinetra-slider:before {
+    transform: translateX(20px);
+}
+
+/* ─── Buttons ─── */
+.trinetra-scan-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 24px;
+    background: var(--purple);
+    color: #fff;
+    border: none;
+    border-radius: 100px;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    color: #FFFFFF;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 12px rgba(107, 58, 245, 0.25);
+}
+
+.trinetra-scan-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(107, 58, 245, 0.35);
+    background: #5D31D9;
+}
+
+.trinetra-scan-btn.secondary {
+    background: var(--purple-soft);
+    color: var(--purple) !important;
+    border: 1.5px solid var(--purple-soft);
+    box-shadow: none;
+}
+
+.trinetra-scan-btn.secondary:hover {
+    background: var(--purple-soft);
+    border-color: var(--purple-mid);
+}
+
+.trinetra-terminate-btn {
+    padding: 10px 20px;
+    background: transparent;
+    color: var(--fake-color);
+    border: 1.5px solid var(--fake-border);
+    border-radius: 100px;
+    font-family: var(--font);
     font-size: 13px;
-    line-height: 1.5;
-    color: var(--text-muted);
-    background: #f9fafb;
-    padding: 16px;
-    border-radius: 8px;
-    border: 1px solid var(--border-light);
-    margin-top: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.trinetra-terminate-btn:hover {
+    background: var(--fake-soft);
+    border-color: var(--fake-color);
+}
+
+.trinetra-terminate-overlay-btn {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 28px;
+    background: var(--text-primary);
+    color: #fff;
+    border: none;
+    border-radius: 100px;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    color: #FFFFFF !important;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    z-index: 2147483647;
+}
+
+/* ─── Loader ─── */
+.trinetra-loader {
+    width: 38px;
+    height: 38px;
+    border: 3.5px solid var(--purple-soft);
+    border-bottom-color: var(--purple);
+    border-radius: 50%;
+    display: inline-block;
+    box-sizing: border-box;
+    animation: trin-rotation 1s linear infinite;
+}
+
+@keyframes trin-rotation {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ─── Footer ─── */
+.trinetra-widget-footer {
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--bg-muted);
+}
+
+.trinetra-widget-footer img {
+    width: 14px;
+    height: 14px;
+    opacity: 0.5;
+}
+
+.trinetra-widget-footer span {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.06em;
+    font-weight: 500;
 }

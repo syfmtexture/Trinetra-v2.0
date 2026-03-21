@@ -31,6 +31,8 @@ app.add_middleware(
 
 class AnalysisRequest(BaseModel):
     base64_data: str  # Data URL or raw base64
+    use_local: bool = True
+    use_cloud: bool = True
 
 class AnalysisResponse(BaseModel):
     primary_verdict: str  # "FAKE" or "REAL"
@@ -45,6 +47,13 @@ class AnalysisResponse(BaseModel):
 @app.post("/analyze", response_model=AnalysisResponse)
 async def analyze_image(request: AnalysisRequest):
     try:
+        start_time = float(time.perf_counter())
+        local_label = "DISABLED"
+        local_conf = 0.0
+        rd_status = "DISABLED"
+        rd_score = 0.0
+        result = None
+
         # 1. Decode base64 data
         header, data = request.base64_data.split(",", 1) if "," in request.base64_data else (None, request.base64_data)
         image_bytes = base64.b64decode(data)
@@ -60,45 +69,49 @@ async def analyze_image(request: AnalysisRequest):
             
         # 3. Run Inference
         checkpoint_path = os.path.join(MODEL_DIR, "best_model.pt")
-        if not os.path.exists(checkpoint_path):
-             raise HTTPException(status_code=500, detail="Model checkpoint not found.")
-             
-        start_time = float(time.perf_counter())
-        result: InferenceResult = run_inference(temp_path, checkpoint_path)
-        end_time = float(time.perf_counter())
-        latency = float(end_time - start_time)
+        
+        # We always call run_inference but pass the enable_rd flag
+        result: InferenceResult = run_inference(
+            temp_path, 
+            checkpoint_path, 
+            enable_rd=request.use_cloud
+        )
         
         # 4. Clean up
-        try:
-            os.remove(temp_path)
-        except:
-            pass
-            
-        # 5. Build basic local stats
-        pct = float(result.fake_probability * 100)
-        local_label = "FAKE" if result.label == "FAKE" else "REAL"
-        local_conf = pct if local_label == "FAKE" else (100.0 - pct)
+        try: os.remove(temp_path)
+        except: pass
         
-        # 6. Prioritize "Most Correct" (Cloud > Local)
-        # As local model is not fully trained, RD Cloud is the primary authority.
-        rd = result.rd_result
-        rd_status = rd.get("status") if rd else "DISABLED"
-        rd_score = float(rd.get("score", 0.0)) if rd else 0.0
+        # 5. Process Local Results
+        if request.use_local:
+            pct = float(result.fake_probability * 100)
+            local_label = "FAKE" if result.label == "FAKE" else "REAL"
+            local_conf = pct if local_label == "FAKE" else (100.0 - pct)
         
-        # Logic: If RD found it FAKE/MANIPULATED, that's our primary verdict.
-        if rd and rd_status in ["FAKE", "MANIPULATED", "SUSPICIOUS"]:
+        # 6. Process Cloud Results
+        if request.use_cloud:
+            rd = result.rd_result
+            rd_status = rd.get("status") if rd else "ERROR"
+            rd_score = float(rd.get("score", 0.0)) if rd else 0.0
+        
+        # 7. Consolidated Verdict
+        if request.use_cloud and rd_status in ["FAKE", "MANIPULATED", "SUSPICIOUS"]:
             primary_verdict = "FAKE"
             confidence_score = rd_score * 100
-            summary = f"🚨 CLOUD VERDICT: {rd_status} ({confidence_score:.1f}%). Local model reports {local_label} ({local_conf:.1f}%)."
-        elif rd and rd_status == "AUTHENTIC":
+            summary = f"🚨 CLOUD VERDICT: {rd_status} ({confidence_score:.1f}%). {f'Local model reports {local_label} ({local_conf:.1f}%).' if request.use_local else 'Local analysis skipped.'}"
+        elif request.use_cloud and rd_status == "AUTHENTIC":
             primary_verdict = "REAL"
             confidence_score = (1.0 - rd_score) * 100
             summary = f"✅ CLOUD VERDICT: AUTHENTIC. High confidence cloud analysis confirmed media is real."
-        else:
-            # Fallback to local if RD is offline or inconclusive
+        elif request.use_local:
             primary_verdict = local_label
             confidence_score = local_conf
-            summary = f"🛡️ LOCAL VERDICT: {local_label} ({local_conf:.1f}%). Cloud verification was inconclusive or offline."
+            summary = f"🛡️ LOCAL VERDICT: {local_label} ({local_conf:.1f}%). { 'Cloud verification was inconclusive or offline.' if request.use_cloud else 'Cloud analysis skipped.'}"
+        else:
+            primary_verdict = "UNKNOWN"
+            confidence_score = 0.0
+            summary = "⚠️ Analysis inconclusive. Both Local and Cloud engines returned no clear result."
+
+        latency = float(time.perf_counter() - start_time)
 
         return AnalysisResponse(
             primary_verdict=primary_verdict,
@@ -106,7 +119,7 @@ async def analyze_image(request: AnalysisRequest):
             local_label=local_label,
             local_confidence=round(float(local_conf), 2),
             rd_status=rd_status,
-            rd_score=round(float(rd_score), 4) if rd else None,
+            rd_score=round(float(rd_score), 4) if rd_status != "DISABLED" else None,
             forensic_summary=summary,
             latency_ms=round(float(latency * 1000), 2)
         )
