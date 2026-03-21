@@ -16,8 +16,8 @@ from pydantic import BaseModel
 from PIL import Image
 import io
 
-from src.inference.infer import run_inference, InferenceResult
-from src.core.config import MODEL_DIR
+from src.inference.infer import run_inference, InferenceResult, analyze_audio
+from src.core.config import MODEL_DIR, AUDIO_EXTENSIONS
 
 app = FastAPI(title="Trinetra Local API")
 
@@ -115,6 +115,63 @@ async def analyze_image(request: AnalysisRequest):
         print(f"API Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/analyze-audio", response_model=AnalysisResponse)
+async def analyze_audio_endpoint(request: AnalysisRequest):
+    try:
+        # 1. Decode base64 data
+        header, data = request.base64_data.split(",", 1) if "," in request.base64_data else (None, request.base64_data)
+        audio_bytes = base64.b64decode(data)
+        
+        # 2. Save to temporary file
+        temp_dir = os.path.join(os.getcwd(), "tmp_api")
+        os.makedirs(temp_dir, exist_ok=True)
+        # We try to guess extension from header if possible, else default to .mp3
+        ext = ".mp3"
+        if header and "wav" in header: ext = ".wav"
+        elif header and "m4a" in header: ext = ".m4a"
+        
+        temp_filename = f"{uuid.uuid4()}{ext}"
+        temp_path = os.path.join(temp_dir, temp_filename)
+        
+        with open(temp_path, "wb") as f:
+            f.write(audio_bytes)
+            
+        # 3. Run Audio Inference (RD-only)
+        start_time = float(time.perf_counter())
+        result: InferenceResult = analyze_audio(temp_path)
+        end_time = float(time.perf_counter())
+        latency = float(end_time - start_time)
+        
+        # 4. Clean up
+        try: os.remove(temp_path)
+        except: pass
+            
+        rd = result.rd_result
+        rd_status = rd.get("status") if rd else "DISABLED"
+        rd_score = float(rd.get("score", 0.0)) if rd else 0.0
+        
+        # Build summary
+        if rd and rd_status in ["FAKE", "MANIPULATED", "SUSPICIOUS"]:
+            summary = f"🚨 CLOUD VERDICT: {rd_status} ({(rd_score*100):.1f}%). Audio appears to be AI-generated."
+        elif rd and rd_status == "AUTHENTIC":
+            summary = f"✅ CLOUD VERDICT: AUTHENTIC. High confidence cloud analysis confirmed audio is real."
+        else:
+            summary = f"⚠️ CLOUD VERDICT: {rd_status}. Cloud analysis was inconclusive."
+
+        return AnalysisResponse(
+            primary_verdict=result.label,
+            confidence_score=round(float(result.fake_probability * 100), 2),
+            local_label="N/A",
+            local_confidence=0.0,
+            rd_status=rd_status,
+            rd_score=round(float(rd_score), 4) if rd else None,
+            forensic_summary=summary,
+            latency_ms=round(float(latency * 1000), 2)
+        )
+    except Exception as e:
+        print(f"Audio API Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/whatsapp")
 async def whatsapp_webhook(request: Request):
     """
@@ -147,13 +204,17 @@ async def whatsapp_webhook(request: Request):
             
             # Determine extension from Content-Type
             ctype = resp.headers.get("Content-Type", "").lower()
+            is_audio = "audio" in ctype
             if "image" in ctype:
                 ext = ".png"
             elif "video" in ctype:
                 ext = ".mp4"
+            elif is_audio:
+                ext = ".mp3" # default audio
             else:
                 # Fallback to URL extension
                 ext = os.path.splitext(MediaUrl0.split('?')[0])[1].lower() or ".png"
+                if ext in AUDIO_EXTENSIONS: is_audio = True
                 
             temp_filename = f"whatsapp_{uuid.uuid4()}{ext}"
             temp_path = os.path.join(temp_dir, temp_filename)
@@ -162,9 +223,12 @@ async def whatsapp_webhook(request: Request):
                 f.write(resp.content)
 
         # 3. Run Inference
-        checkpoint_path = os.path.join(MODEL_DIR, "best_model.pt")
         start_time = time.perf_counter()
-        result: InferenceResult = run_inference(temp_path, checkpoint_path)
+        if is_audio:
+            result: InferenceResult = analyze_audio(temp_path)
+        else:
+            checkpoint_path = os.path.join(MODEL_DIR, "best_model.pt")
+            result: InferenceResult = run_inference(temp_path, checkpoint_path)
         end_time = time.perf_counter()
         latency = round((end_time - start_time) * 1000, 2)
 
@@ -189,7 +253,7 @@ async def whatsapp_webhook(request: Request):
             f"Confidence: {conf:.1f}%\n"
             f"{rd_text}\n\n"
             f"Processing Latency: {latency}ms\n"
-            f"_Powered by EfficientNet-B4 + LSTM_"
+            f"_{"Reality Defender Cloud Scan" if is_audio else "EfficientNet-B4 + LSTM"}_"
         )
 
         return Response(

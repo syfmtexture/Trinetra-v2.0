@@ -2,6 +2,23 @@
  * background.js — Handler for Trinetra Extension Actions
  */
 
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({
+    id: "scan-audio",
+    title: "Scan Audio with Trinetra",
+    contexts: ["audio", "video"]
+  });
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === "scan-audio") {
+    const src = info.srcUrl;
+    if (src) {
+      chrome.tabs.sendMessage(tab.id, { action: "scan-audio-src", url: src });
+    }
+  }
+});
+
 chrome.action.onClicked.addListener(async (tab) => {
   if (tab.url.startsWith("chrome://") || tab.url.startsWith("https://chrome.google.com/webstore")) {
     console.error("Trinetra cannot run on Chrome system pages.");

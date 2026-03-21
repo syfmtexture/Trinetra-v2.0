@@ -14,7 +14,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from src.inference.infer import run_inference, InferenceResult
+from src.inference.infer import run_inference, InferenceResult, analyze_audio
 from src.core.config import CHECKPOINT_DIR
 
 
@@ -177,7 +177,12 @@ def analyze(file_obj):
         )
 
     try:
-        result: InferenceResult = run_inference(file_path, ckpt)
+        ext = os.path.splitext(file_path)[1].lower()
+        from src.core.config import AUDIO_EXTENSIONS
+        if ext in AUDIO_EXTENSIONS:
+            result: InferenceResult = analyze_audio(file_path)
+        else:
+            result: InferenceResult = run_inference(file_path, ckpt)
     except Exception as e:
         return (
             f"❌  Inference failed: {e}",
@@ -271,8 +276,8 @@ def create_ui():
             with gr.Column(scale=1):
                 gr.Markdown("### Input")
                 file_input = gr.File(
-                    label="Upload Image or Video",
-                    file_types=["image", "video"],
+                    label="Upload Image, Video or Audio",
+                    file_types=["image", "video", "audio"],
                     type="filepath",
                 )
                 analyse_btn = gr.Button("⚡ Analyze Media", variant="primary", size="lg")
@@ -280,7 +285,8 @@ def create_ui():
                 gr.Markdown(
                     "**Supported Formats:**\n"
                     "- Images (JPEG, PNG, WEBP, up to 10MB)\n"
-                    "- Video (MP4, MOV, up to 250MB)\n\n"
+                    "- Video (MP4, MOV, up to 250MB)\n"
+                    "- Audio (MP3, WAV, M4A, etc., up to 20MB)\n\n"
                     "*All media is processed securely with dual-layer cloud verification when enabled.*"
                 )
 

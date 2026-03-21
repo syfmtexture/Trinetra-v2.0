@@ -21,8 +21,27 @@
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "toggle-selection") {
       activateSelectionMode();
+    } else if (request.action === "scan-audio-src") {
+      handleAudioScan(request.url);
     }
   });
+
+  function handleAudioScan(url) {
+    showToast("🎵 Fetching audio data...", "loading");
+    fetch(url)
+      .then(r => r.blob())
+      .then(blob => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          analyzeAudio(reader.result);
+        };
+        reader.readAsDataURL(blob);
+      })
+      .catch(err => {
+        showToast("❌ Failed to fetch audio source.", "error");
+        console.error("Audio fetch error:", err);
+      });
+  }
 
   function activateSelectionMode() {
     if (overlay) return;
@@ -135,6 +154,24 @@
     img.src = dataUrl;
   }
 
+  function analyzeAudio(base64Data) {
+    showToast("🔬 Running Audio Forensic Triage...", "loading");
+
+    fetch("http://localhost:8000/analyze-audio", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ base64_data: base64Data })
+    })
+      .then(r => r.json())
+      .then(data => {
+        showResultPopup(data, true);
+      })
+      .catch(err => {
+        showToast("🔴 API Offline. Ensure Trinetra server is running.", "error");
+        console.error("Trinetra Audio API error:", err);
+      });
+  }
+
   function analyzeImage(base64Data) {
     showToast("🔬 Running Forensic Triage...", "loading");
 
@@ -170,7 +207,7 @@
     }
   }
 
-  function showResultPopup(data) {
+  function showResultPopup(data, isAudio = false) {
     // Remove toast
     const toast = document.getElementById('trinetra-toast');
     if (toast) toast.classList.remove('show');
@@ -209,6 +246,8 @@
     }
 
     const localTextClass = data.local_label === "FAKE" ? "fake-text" : "real-text";
+    const localDisplay = isAudio ? "N/A (Cloud Only)" : `${data.local_label} (${data.local_confidence.toFixed(1)}%)`;
+    const localClass = isAudio ? "" : localTextClass;
 
     widget.innerHTML = `
         <div class="trinetra-widget-header" id="trinetra-widget-header">
@@ -230,10 +269,10 @@
             </div>
 
             <div class="trinetra-details-grid">
-               <div class="trinetra-detail-row">
-                  <span class="trinetra-detail-label">Local Model</span>
-                  <span class="trinetra-detail-value ${localTextClass}">${data.local_label} (${data.local_confidence.toFixed(1)}%)</span>
-               </div>
+                <div class="trinetra-detail-row">
+                   <span class="trinetra-detail-label">Local Model</span>
+                   <span class="trinetra-detail-value ${localClass}">${localDisplay}</span>
+                </div>
                ${rdHtml}
                <div class="trinetra-detail-row">
                   <span class="trinetra-detail-label">Processing Time</span>
