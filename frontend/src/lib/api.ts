@@ -75,3 +75,21 @@ export async function analyzeMedia(file: File): Promise<AnalysisResponse> {
 
   return res.json();
 }
+
+/**
+ * Subscribe a user's email to the newsletter.
+ */
+export async function subscribeToNewsletter(email: string): Promise<{ status: string, message: string }> {
+  const res = await fetch(`${API_BASE}/subscribe`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({ detail: 'Subscription failed' }));
+    throw new Error(errorBody.detail || `Subscription failed: ${res.status}`);
+  }
+
+  return res.json();
+}

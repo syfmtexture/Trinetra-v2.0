@@ -1,3 +1,5 @@
+/* Tailwind CSS Base Rules - These may trigger 'Unknown at-rule' warnings in some IDEs. 
+   These warnings are expected and can be safely ignored or resolved by installing a Tailwind CSS extension. */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -12,9 +14,71 @@
   --trinetra-glass-bg: rgba(255, 255, 255, 0.7);
   --trinetra-glass-border: rgba(0, 0, 0, 0.05);
 
+  --background: #F5F0EC;
+  --foreground: #1A1A1A;
+  --surface: #EDE8E3;
+  --surface-2: #E4DDD7;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-strong: #D4CFC9;
+
+  --card-bg: rgba(248, 243, 238, 0.96);
+  --card-border: rgba(0, 0, 0, 0.07);
+  --card-blur: blur(20px);
+  
+  --accent-brand: #FF6B00;
+  --accent-blue: #1E90FF;
+  --accent-red: #FA5252;
+  --accent-green: #40C057;
+  --accent-brand: #FF6B00;
+  --accent-purple: #7950F2;
+  
+  --muted: #7A7068;
+  --muted-dark: #C4BEB8;
+  
+  --header-bg: rgba(245, 240, 236, 0.96);
+  --header-border: rgba(0, 0, 0, 0.07);
+
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
   --font-inter: 'Inter', sans-serif;
   --font-syncopate: 'Syncopate', sans-serif;
   --font-mono: 'Space Mono', 'JetBrains Mono', 'Fira Code', monospace;
+
+  --bg-base: #F5F0EC;
+  --shape-a: rgba(255, 107, 0, 0.13);
+  --shape-b: rgba(30, 144, 255, 0.10);
+  --shape-c: rgba(255, 107, 0, 0.07);
+}
+
+.dark {
+  --background: #030303;
+  --foreground: #DEDEDE;
+  --surface: #0A0A0A;
+  --surface-2: #101010;
+  --border: rgba(255, 255, 255, 0.05);
+  --border-strong: rgba(255, 255, 255, 0.08);
+
+  --card-bg: rgba(8, 8, 8, 0.99);
+  --card-border: rgba(255, 107, 0, 0.09);
+  --card-blur: blur(20px);
+
+  --accent-brand: #FF6B00;
+  --accent-blue: #1E90FF;
+  --accent-red: #FF4444;
+  --accent-green: #3ECF6B;
+  --accent-purple: #9B72FF;
+
+  --muted: #444444;
+  --muted-dark: #1A1A1A;
+
+  --header-bg: rgba(3, 3, 3, 0.99);
+  --header-border: rgba(255, 107, 0, 0.14);
+
+  --glass-shadow: 0 8px 40px 0 rgba(0, 0, 0, 0.95);
+
+  --bg-base: #030303;
+  --shape-a: rgba(255, 107, 0, 0.07);
+  --shape-b: rgba(30, 144, 255, 0.06);
+  --shape-c: rgba(255, 107, 0, 0.04);
 }
 
 .dark {
@@ -37,6 +101,14 @@
   html {
     scrollbar-width: none;
     -ms-overflow-style: none;
+  }
+
+  body {
+    @apply text-foreground;
+    font-family: var(--font-inter);
+    background: var(--bg-base);
+    min-height: 100vh;
+  }
   }
 
   body {
@@ -79,6 +151,77 @@
 
 @layer utilities {
   /* Landing Page Utilities */
+/* ─── 3D Background Animations ─── */
+@keyframes floatA {
+  0%   { transform: perspective(800px) rotateX(0deg)   rotateY(0deg)   translateZ(0px)  translate(0, 0); }
+  25%  { transform: perspective(800px) rotateX(18deg)  rotateY(30deg)  translateZ(40px) translate(2%, 3%); }
+  50%  { transform: perspective(800px) rotateX(-12deg) rotateY(65deg)  translateZ(20px) translate(-3%, 5%); }
+  75%  { transform: perspective(800px) rotateX(22deg)  rotateY(-25deg) translateZ(55px) translate(4%, -2%); }
+  100% { transform: perspective(800px) rotateX(0deg)   rotateY(0deg)   translateZ(0px)  translate(0, 0); }
+}
+@keyframes floatB {
+  0%   { transform: perspective(600px) rotateX(10deg)  rotateY(-10deg) translateZ(0px)  translate(0, 0); }
+  33%  { transform: perspective(600px) rotateX(-22deg) rotateY(42deg)  translateZ(50px) translate(-4%, 5%); }
+  66%  { transform: perspective(600px) rotateX(32deg)  rotateY(-32deg) translateZ(28px) translate(5%, -3%); }
+  100% { transform: perspective(600px) rotateX(10deg)  rotateY(-10deg) translateZ(0px)  translate(0, 0); }
+}
+@keyframes floatC {
+  0%   { transform: perspective(1000px) rotateX(5deg)   rotateY(5deg)   scale(1)    translate(0, 0); }
+  40%  { transform: perspective(1000px) rotateX(-18deg) rotateY(-28deg) scale(1.12) translate(5%, 2%); }
+  70%  { transform: perspective(1000px) rotateX(28deg)  rotateY(18deg)  scale(0.88) translate(-4%, -4%); }
+  100% { transform: perspective(1000px) rotateX(5deg)   rotateY(5deg)   scale(1)    translate(0, 0); }
+}
+@keyframes floatD {
+  0%   { transform: perspective(700px) rotateY(0deg)   rotateZ(0deg)   translateZ(0)    translate(0, 0); }
+  30%  { transform: perspective(700px) rotateY(-45deg) rotateZ(12deg)  translateZ(70px) translate(-5%, 7%); }
+  60%  { transform: perspective(700px) rotateY(55deg)  rotateZ(-6deg)  translateZ(18px) translate(7%, -4%); }
+  100% { transform: perspective(700px) rotateY(0deg)   rotateZ(0deg)   translateZ(0)    translate(0, 0); }
+}
+@keyframes floatE {
+  0%   { transform: perspective(900px) rotateX(-5deg)  rotateY(10deg)  translateZ(10px); opacity: 0.7; }
+  50%  { transform: perspective(900px) rotateX(22deg)  rotateY(-22deg) translateZ(65px); opacity: 1; }
+  100% { transform: perspective(900px) rotateX(-5deg)  rotateY(10deg)  translateZ(10px); opacity: 0.7; }
+}
+
+/* shape base */
+.bg-shape {
+  position: absolute;
+  filter: blur(0.5px);
+  will-change: transform;
+  pointer-events: none;
+}
+.bg-shape-a {
+  background: var(--shape-a);
+  border: 1.5px solid rgba(255, 107, 0, 0.22);
+  border-radius: 30% 70% 60% 40% / 40% 50% 60% 50%;
+  animation: floatA 20s ease-in-out infinite;
+}
+.bg-shape-b {
+  background: var(--shape-b);
+  border: 1.5px solid rgba(30, 144, 255, 0.20);
+  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  animation: floatB 26s ease-in-out infinite;
+}
+.bg-shape-c {
+  background: var(--shape-c);
+  border: 1px solid rgba(255, 107, 0, 0.14);
+  border-radius: 40% 60% 70% 30% / 30% 60% 40% 70%;
+  animation: floatC 32s ease-in-out infinite;
+}
+.bg-shape-d {
+  background: var(--shape-b);
+  border: 1px solid rgba(30, 144, 255, 0.16);
+  border-radius: 70% 30% 50% 50% / 50% 60% 40% 50%;
+  animation: floatD 24s ease-in-out infinite;
+}
+.bg-shape-e {
+  background: var(--shape-a);
+  border: 1.5px solid rgba(255, 107, 0, 0.20);
+  border-radius: 50% 50% 30% 70% / 40% 60% 40% 60%;
+  animation: floatE 17s ease-in-out infinite;
+}
+
+@layer components {
   .glass-panel {
     background-color: var(--trinetra-glass-bg);
     backdrop-filter: blur(12px);
@@ -98,5 +241,30 @@
 
   .glow-orange {
     box-shadow: 0 0 25px rgba(252, 88, 3, 0.3);
+  }
+
+  .glass-button.active {
+    background: var(--accent-brand);
+    color: var(--bg-base);
+    border-color: var(--accent-brand);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--muted-dark);
+    @apply rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--muted);
+  }
   }
 }
