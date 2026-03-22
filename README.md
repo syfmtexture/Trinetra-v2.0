@@ -42,7 +42,10 @@ RD_API_KEY=your_api_key_here
 
 ### 3. Model Weights
 
-Place your trained model checkpoints in the `model/` directory. The main expected file is `best_model.pt` containing the `EfficientNet-B4 + LSTM` PyTorch state dict.
+The core AI model (`best_model.pt`) is excluded from this repository due to its large size (~250MB). To run the analysis features:
+1.  Obtain the model weights (e.g., from the project's releases or an external download link).
+2.  Place the `best_model.pt` file inside the `model/` directory.
+3.  Ensure the directory structure looks like: `Trinetra-v2.0/model/best_model.pt`.
 
 ### 4. Running the Interfaces
 
