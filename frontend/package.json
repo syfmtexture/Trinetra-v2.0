@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@fontsource/dm-sans": "^5.2.8",
     "@react-three/drei": "^9.105.10",
     "@react-three/fiber": "^8.16.6",
     "clsx": "^2.1.1",
