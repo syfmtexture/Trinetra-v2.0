@@ -26,3 +26,4 @@ db.sqlite3
 *.DS_Store
 *.pt
 best_model.pt
+model/
