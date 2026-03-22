@@ -124,7 +124,10 @@ async def analyze_image(request: AnalysisRequest):
         # 3. Run Inference
         checkpoint_path = os.path.join(MODEL_DIR, "best_model.pt")
         if not os.path.exists(checkpoint_path):
-             raise HTTPException(status_code=500, detail="Model checkpoint not found.")
+             raise HTTPException(
+                 status_code=500, 
+                 detail="Model checkpoint 'best_model.pt' not found in the 'model/' directory. Please ensure the weights are downloaded and placed correctly."
+             )
              
         start_time = time.perf_counter()
         result: InferenceResult = run_inference(temp_path, checkpoint_path)
