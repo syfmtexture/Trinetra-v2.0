@@ -51,9 +51,9 @@ else:
         from src.inference.infer import run_inference, InferenceResult
         from src.core.config import MODEL_DIR
         _ML_AVAILABLE = True
-        print("✅ ML model loaded successfully.")
+        print("[OK] ML model loaded successfully.")
     except Exception as _ml_err:
-        print(f"⚠️  ML model unavailable: {_ml_err}. Running in DEMO mode.")
+        print(f"[WARN] ML model unavailable: {_ml_err}. Running in DEMO mode.")
         MODEL_DIR = ""
         # Provide a stub InferenceResult for demo mode
         class InferenceResult:  # type: ignore
@@ -112,16 +112,31 @@ async def analyze_image(request: AnalysisRequest):
         header, data = request.base64_data.split(",", 1) if "," in request.base64_data else (None, request.base64_data)
         image_bytes = base64.b64decode(data)
         
-        # 2. Save to temporary file
+        # 2. Determine file extension from MIME type in the data URL header
+        ext = ".png"  # default
+        if header:
+            # header looks like "data:video/mp4;base64" or "data:image/png;base64"
+            mime_map = {
+                "video/mp4": ".mp4", "video/avi": ".avi", "video/mov": ".mov",
+                "video/quicktime": ".mov", "video/x-msvideo": ".avi", "video/mkv": ".mkv",
+                "image/png": ".png", "image/jpeg": ".jpg", "image/jpg": ".jpg",
+                "image/bmp": ".bmp", "image/webp": ".webp",
+            }
+            for mime, extension in mime_map.items():
+                if mime in header.lower():
+                    ext = extension
+                    break
+        
+        # 3. Save to temporary file with correct extension
         temp_dir = os.path.join(os.getcwd(), "tmp_api")
         os.makedirs(temp_dir, exist_ok=True)
-        temp_filename = f"{uuid.uuid4()}.png"
+        temp_filename = f"{uuid.uuid4()}{ext}"
         temp_path = os.path.join(temp_dir, temp_filename)
         
         with open(temp_path, "wb") as f:
             f.write(image_bytes)
             
-        # 3. Run Inference
+        # 4. Run Inference (in thread pool to avoid blocking the event loop)
         checkpoint_path = os.path.join(MODEL_DIR, "best_model.pt")
         if not os.path.exists(checkpoint_path):
              raise HTTPException(
@@ -129,11 +144,18 @@ async def analyze_image(request: AnalysisRequest):
                  detail="Model checkpoint 'best_model.pt' not found in the 'model/' directory. Please ensure the weights are downloaded and placed correctly."
              )
              
+        print(f"[ANALYZE] Starting inference on: {temp_filename} (ext={ext})")
         start_time = time.perf_counter()
-        result: InferenceResult = run_inference(temp_path, checkpoint_path)
+        try:
+            result: InferenceResult = await asyncio.to_thread(run_inference, temp_path, checkpoint_path)
+        except Exception as inference_err:
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=f"Inference failed: {inference_err}")
         end_time = time.perf_counter()
+        print(f"[ANALYZE] Inference complete in {(end_time - start_time)*1000:.0f}ms -> {result.label}")
         
-        # 4. Clean up
+        # 5. Clean up
         try:
             os.remove(temp_path)
         except:
@@ -148,22 +170,25 @@ async def analyze_image(request: AnalysisRequest):
         # As local model is not fully trained, RD Cloud is the primary authority.
         rd = result.rd_result
         rd_status = rd.get("status") if rd else "DISABLED"
-        rd_score = rd.get("score", 0.0) if rd else 0.0
+        rd_score_raw = rd.get("score") if rd else None
+        rd_score = float(rd_score_raw) if rd_score_raw is not None else 0.0
         
         # Logic: If RD found it FAKE/MANIPULATED, that's our primary verdict.
-        if rd and rd_status in ["FAKE", "MANIPULATED", "SUSPICIOUS"]:
+        # Gate on rd_status being a valid actionable verdict (not ERROR/DISABLED/SKIPPED)
+        if rd and rd_status in ["FAKE", "MANIPULATED", "SUSPICIOUS"] and rd_score_raw is not None:
             primary_verdict = "FAKE"
             confidence_score = rd_score * 100
             summary = f"🚨 CLOUD VERDICT: {rd_status} ({confidence_score:.1f}%). Local model reports {local_label} ({local_conf:.1f}%)."
-        elif rd and rd_status == "AUTHENTIC":
+        elif rd and rd_status == "AUTHENTIC" and rd_score_raw is not None:
             primary_verdict = "REAL"
             confidence_score = (1.0 - rd_score) * 100
             summary = f"✅ CLOUD VERDICT: AUTHENTIC. High confidence cloud analysis confirmed media is real."
         else:
-            # Fallback to local if RD is offline or inconclusive
+            # Fallback to local if RD is offline, errored, or inconclusive
             primary_verdict = local_label
             confidence_score = local_conf
-            summary = f"🛡️ LOCAL VERDICT: {local_label} ({local_conf:.1f}%). Cloud verification was inconclusive or offline."
+            rd_reason = f" ({rd_status})" if rd_status and rd_status not in ["DISABLED", "None"] else ""
+            summary = f"🛡️ LOCAL VERDICT: {local_label} ({local_conf:.1f}%). Cloud verification was unavailable{rd_reason}."
 
         # 7. Convert images to base64
         def pil_to_base64(img: Image.Image) -> str:
@@ -197,13 +222,13 @@ class SubscriptionRequest(BaseModel):
 @app.post("/subscribe")
 async def subscribe(request: SubscriptionRequest):
     # Simulate sending an email
-    print(f"📧 [SYSTEM] Sending Newsletter Welcome Email to: {request.email}")
+    print(f"[EMAIL] Sending Newsletter Welcome Email to: {request.email}")
     await asyncio.sleep(1) # Non-blocking delay
     return {"status": "success", "message": f"[SIMULATION] Welcome email queued for {request.email}. (Note: Real SMTP is disabled in this local build)"}
 
 @app.get("/health")
 async def health_check():
-    return {"status": "online", "model": "EfficientNet-B4 + LSTM"}
+    return {"status": "online", "model": "EfficientNet-V2-S + Transformer"}
 
 if __name__ == "__main__":
     import uvicorn # type: ignore

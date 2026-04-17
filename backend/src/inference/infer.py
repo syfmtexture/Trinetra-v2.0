@@ -1,10 +1,10 @@
 """
-infer.py — Explainable Inference Pipeline for Project Trinetra.
+infer.py -- Explainable Inference Pipeline for Project Trinetra.
 
 Provides:
-  • GradCAM class           – spatial artifact localisation via last EfficientNet block
-  • run_inference()         – master orchestrator (image / video routing)
-  • InferenceResult         – structured dataclass returned to callers (UI or CLI)
+  * GradCAM class           -- spatial artifact localisation via last EfficientNet block
+  * run_inference()         -- master orchestrator (image / video routing)
+  * InferenceResult         -- structured dataclass returned to callers (UI or CLI)
 
 Usage (standalone CLI):
     python infer.py --input "path/to/file.mp4"
@@ -128,7 +128,7 @@ class GradCAM:
         features = self.model.features(frame_tensor)
         pooled = self.model.pool(features)
         pooled = torch.flatten(pooled, 1)
-        logit = self.model.fc_static(self.model.dropout(pooled))  # (1, 1)
+        logit = self.model.classifier(pooled)  # (1, 1)
 
         # Backward
         self.model.zero_grad()
@@ -420,7 +420,10 @@ def run_inference(
         # Consistency check: flag if segments strongly disagree
         temporal_consistent = float(np.max(segment_probs)) - float(np.min(segment_probs)) < 0.35
     else:
-        raw_frames = [cv2.cvtColor(cv2.imread(file_path), cv2.COLOR_BGR2RGB)]
+        raw_img = cv2.imread(file_path)
+        if raw_img is None:
+            raise IOError(f"Cannot read image file: {file_path}")
+        raw_frames = [cv2.cvtColor(raw_img, cv2.COLOR_BGR2RGB)]
         crops, confs, lms = _process_frames(raw_frames)
         all_landmarks.extend(lms)
         fake_prob, _ = _score_segment(crops, confs, is_seq=False)
@@ -431,9 +434,13 @@ def run_inference(
     label = "FAKE" if fake_prob >= FAKE_THRESHOLD else "REAL"
 
     # ── Grad-CAM on first face ──
-    first_crop = face_crop_rgb if face_crop_rgb is not None else (
-        cv2.cvtColor(cv2.imread(file_path), cv2.COLOR_BGR2RGB) if is_image else None
-    )
+    if face_crop_rgb is not None:
+        first_crop = face_crop_rgb
+    elif is_image:
+        fallback_img = cv2.imread(file_path)
+        first_crop = cv2.cvtColor(fallback_img, cv2.COLOR_BGR2RGB) if fallback_img is not None else None
+    else:
+        first_crop = None
     gradcam_overlay = None
     face_pil = None
     if first_crop is not None:
@@ -457,10 +464,13 @@ def run_inference(
             seq_tensors.append(torch.zeros_like(seq_tensors[0]))
         full_input = torch.stack(seq_tensors[:SEQ_LEN]).unsqueeze(0)
         with torch.no_grad():
-            _, lstm_hidden = model.forward_with_hidden(full_input)
-        if lstm_hidden is not None:
+            _, transformer_hidden = model.forward_with_hidden(full_input)
+        if transformer_hidden is not None:
+            # Project each frame's transformer output through the classifier
+            # to get per-frame confidence scores for temporal rollout
+            frame_features = transformer_hidden.squeeze(0)  # (T, feat_dim)
             temporal_rollout = temporal_attention_rollout(
-                lstm_hidden.squeeze(0), model.fc_seq,
+                frame_features, model.classifier,
             )
 
     # ── XAI: Noise residual (ELA) ──

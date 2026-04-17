@@ -1,20 +1,104 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
 
 /**
- * content.css — Trinetra extension UI styling
- * Theme: Cyber-Forensic HUD
+ * content.css — Trinetra Extension UI v3
+ * Theme: Silk UI × Indian Heritage
+ * Palette: Deep obsidian, saffron silk, peacock iridescence, temple gold
+ * Aesthetic: Glassmorphism + silk texture + sacred geometry + buttery animations
  */
 
+/* ═══════════════════════════════════════════════
+   §1  DESIGN TOKENS
+   ═══════════════════════════════════════════════ */
+
 :root {
-    --bg-dark: rgba(7, 10, 19, 0.85);
-    --border-glow: rgba(0, 243, 255, 0.3);
-    --text-main: #e0f2fe;
-    --text-muted: #7dd3fc;
-    --fake-color: #ff003c;
-    --real-color: #00f3ff;
-    --font-head: 'Orbitron', sans-serif;
-    --font-body: 'Rajdhani', sans-serif;
+    /* ── Core Surfaces ── */
+    --bg-void: #050506;
+    --surface-0: rgba(12, 12, 14, 0.92);
+    --surface-1: rgba(18, 18, 22, 0.88);
+    --surface-2: rgba(26, 26, 32, 0.85);
+    --surface-3: rgba(34, 34, 42, 0.8);
+    --surface-glass: rgba(16, 16, 20, 0.65);
+
+    /* ── Glass ── */
+    --glass-blur: blur(40px) saturate(180%);
+    --glass-border: rgba(255, 255, 255, 0.06);
+    --glass-shine: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, transparent 50%);
+    --glass-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 2px 8px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.04);
+
+    /* ── Indian Silk Palette ── */
+    --saffron: #FF7B2E;
+    --saffron-deep: #E85D0A;
+    --saffron-glow: rgba(255, 123, 46, 0.35);
+    --saffron-soft: rgba(255, 123, 46, 0.08);
+    --gold: #D4A017;
+    --gold-light: #F0C850;
+    --gold-soft: rgba(212, 160, 23, 0.12);
+    --gold-shimmer: rgba(240, 200, 80, 0.25);
+    --peacock-blue: #0E8B8D;
+    --peacock-teal: #18B4B8;
+    --peacock-glow: rgba(24, 180, 184, 0.3);
+    --lotus-pink: #E64A8A;
+    --lotus-glow: rgba(230, 74, 138, 0.25);
+    --indigo: #5B5FC7;
+    --indigo-glow: rgba(91, 95, 199, 0.25);
+    --ivory: #FFF8EE;
+
+    /* ── Brand Accents ── */
+    --accent-brand: var(--saffron);
+    --accent-secondary: var(--gold);
+
+    /* ── Verdict Colors ── */
+    --fake-color: #FF4757;
+    --fake-glow: rgba(255, 71, 87, 0.35);
+    --fake-soft: rgba(255, 71, 87, 0.08);
+    --real-color: #2ED573;
+    --real-glow: rgba(46, 213, 115, 0.35);
+    --real-soft: rgba(46, 213, 115, 0.08);
+
+    /* ── Text ── */
+    --text-primary: #ECECEE;
+    --text-secondary: rgba(236, 236, 238, 0.6);
+    --text-tertiary: rgba(236, 236, 238, 0.3);
+    --text-hint: rgba(236, 236, 238, 0.15);
+
+    /* ── Typography ── */
+    --font-display: 'Outfit', 'Inter', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-hindi: 'Noto Sans Devanagari', sans-serif;
+
+    /* ── Borders ── */
+    --border-subtle: rgba(255, 255, 255, 0.04);
+    --border-normal: rgba(255, 255, 255, 0.07);
+    --border-strong: rgba(255, 255, 255, 0.1);
+    --border-accent: rgba(255, 123, 46, 0.2);
+
+    /* ── Radius ── */
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-xl: 32px;
+
+    /* ── Easings ── */
+    --ease-silk: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --ease-spring: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* ── Silk Gradients ── */
+    --silk-saffron: linear-gradient(135deg, #FF7B2E 0%, #E85D0A 40%, #D4A017 100%);
+    --silk-peacock: linear-gradient(135deg, #0E8B8D 0%, #18B4B8 50%, #5B5FC7 100%);
+    --silk-sunset: linear-gradient(135deg, #FF7B2E 0%, #E64A8A 50%, #5B5FC7 100%);
+    --silk-night: linear-gradient(135deg, rgba(14,139,141,0.15) 0%, rgba(255,123,46,0.08) 50%, rgba(91,95,199,0.12) 100%);
 }
+
+
+/* ═══════════════════════════════════════════════
+   §2  SELECTION OVERLAY
+   ═══════════════════════════════════════════════ */
 
 .trinetra-selection-overlay {
     position: fixed;
@@ -22,292 +106,1376 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%);
-    z-index: 2147483647;
+    background: transparent;
+    z-index: 2147483646;
     cursor: crosshair;
-    backdrop-filter: saturate(120%) blur(4px);
-    -webkit-backdrop-filter: saturate(120%) blur(4px);
+    overflow: hidden;
 }
 
 .trinetra-selection-box {
     position: fixed;
-    border: 1px solid var(--real-color);
-    background: rgba(0, 243, 255, 0.05);
-    box-shadow: 0 0 15px var(--border-glow), inset 0 0 20px rgba(0, 243, 255, 0.1);
+    border: 2px solid var(--saffron);
+    background: rgba(255, 123, 46, 0.03);
+    outline: 9999px solid rgba(5, 5, 6, 0.55);
+    box-shadow:
+        0 0 0 1px rgba(255, 123, 46, 0.2),
+        0 0 40px rgba(255, 123, 46, 0.15),
+        inset 0 0 60px rgba(255, 123, 46, 0.05);
+    border-radius: 4px;
     pointer-events: none;
     z-index: 2147483647;
+    animation: box-breathe 2s ease-in-out infinite;
 }
 
-/* Scanner line animation inside the selection box while scanning */
+/* Corner ornaments */
+.trinetra-selection-box::before,
 .trinetra-selection-box::after {
     content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-style: solid;
+    border-color: var(--gold-light);
+    opacity: 0.8;
+}
+
+.trinetra-selection-box::before {
+    top: -1px;
+    left: -1px;
+    border-width: 2px 0 0 2px;
+    border-radius: 2px 0 0 0;
+}
+
+.trinetra-selection-box::after {
+    bottom: -1px;
+    right: -1px;
+    border-width: 0 2px 2px 0;
+    border-radius: 0 0 2px 0;
+}
+
+@keyframes box-breathe {
+    0%, 100% { box-shadow: 0 0 0 1px rgba(255,123,46,0.2), 0 0 40px rgba(255,123,46,0.15), inset 0 0 60px rgba(255,123,46,0.05); }
+    50% { box-shadow: 0 0 0 1px rgba(255,123,46,0.35), 0 0 60px rgba(255,123,46,0.2), inset 0 0 80px rgba(255,123,46,0.08); }
+}
+
+/* Scanning line */
+.trinetra-selection-box .trinetra-scan-line {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 2px;
-    background: var(--real-color);
-    box-shadow: 0 0 10px var(--real-color);
-    animation: scanline 2s linear infinite;
+    background: linear-gradient(90deg, transparent 0%, var(--saffron) 20%, var(--gold-light) 50%, var(--peacock-teal) 80%, transparent 100%);
+    box-shadow: 0 0 20px var(--saffron-glow), 0 0 40px rgba(255,123,46,0.1);
+    animation: silk-scanline 2.5s ease-in-out infinite;
     display: none;
 }
 
-.trinetra-selection-box.scanning::after {
+.trinetra-selection-box.scanning .trinetra-scan-line {
     display: block;
 }
 
-@keyframes scanline {
+@keyframes silk-scanline {
     0% { top: 0; opacity: 0; }
     10% { opacity: 1; }
     90% { opacity: 1; }
     100% { top: 100%; opacity: 0; }
 }
 
-/* Toast */
+
+/* ═══════════════════════════════════════════════
+   §3  MANDALA LOADING SPINNER
+   ═══════════════════════════════════════════════ */
+
+.trinetra-loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(5, 5, 6, 0.9);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 2147483647;
+    animation: silk-fade-in 0.4s var(--ease-silk);
+}
+
+/* Decorative rangoli pattern behind mandala */
+.trinetra-loader-overlay::before {
+    content: '';
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at center, transparent 45%, rgba(255,123,46,0.03) 46%, rgba(255,123,46,0.03) 47%, transparent 48%),
+        radial-gradient(circle at center, transparent 65%, rgba(212,160,23,0.03) 66%, rgba(212,160,23,0.03) 67%, transparent 68%),
+        radial-gradient(circle at center, transparent 85%, rgba(24,180,184,0.03) 86%, rgba(24,180,184,0.03) 87%, transparent 88%);
+    animation: rangoli-pulse 4s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes rangoli-pulse {
+    0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.5; }
+    50% { transform: scale(1.1) rotate(30deg); opacity: 1; }
+}
+
+.trinetra-mandala {
+    position: relative;
+    width: 140px;
+    height: 140px;
+    margin-bottom: 36px;
+}
+
+.trinetra-mandala-ring {
+    position: absolute;
+    border-radius: 50%;
+    border-style: solid;
+    border-color: transparent;
+}
+
+.trinetra-mandala-ring:nth-child(1) {
+    inset: 0;
+    border-width: 2px;
+    border-top-color: var(--saffron);
+    border-right-color: var(--gold);
+    filter: drop-shadow(0 0 6px var(--saffron-glow));
+    animation: mandala-spin 2.5s linear infinite;
+}
+
+.trinetra-mandala-ring:nth-child(2) {
+    inset: 14px;
+    border-width: 1.5px;
+    border-bottom-color: var(--peacock-teal);
+    border-left-color: var(--indigo);
+    filter: drop-shadow(0 0 4px var(--peacock-glow));
+    animation: mandala-spin 3.5s linear infinite reverse;
+}
+
+.trinetra-mandala-ring:nth-child(3) {
+    inset: 28px;
+    border-width: 1.5px;
+    border-top-color: var(--gold-light);
+    border-right-color: var(--lotus-pink);
+    filter: drop-shadow(0 0 3px var(--gold-shimmer));
+    animation: mandala-spin 4.5s linear infinite;
+}
+
+.trinetra-mandala-ring:nth-child(4) {
+    inset: 42px;
+    border-width: 1px;
+    border-bottom-color: var(--saffron);
+    border-left-color: var(--peacock-blue);
+    animation: mandala-spin 3s linear infinite reverse;
+}
+
+/* Centre third-eye */
+.trinetra-mandala-eye {
+    position: absolute;
+    inset: 52px;
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--saffron) 0%, rgba(255,123,46,0.15) 50%, transparent 100%);
+    box-shadow:
+        0 0 30px var(--saffron-glow),
+        0 0 60px rgba(255,123,46,0.1);
+    animation: eye-pulse 2s ease-in-out infinite;
+}
+
+.trinetra-mandala-eye::after {
+    content: '👁';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    filter: saturate(0) brightness(2.5);
+}
+
+@keyframes mandala-spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes eye-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.7; box-shadow: 0 0 30px var(--saffron-glow), 0 0 60px rgba(255,123,46,0.1); }
+    50% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 40px var(--saffron-glow), 0 0 80px rgba(255,123,46,0.15); }
+}
+
+.trinetra-loader-text {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    background: var(--silk-saffron);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-transform: uppercase;
+    animation: text-shimmer 3s ease-in-out infinite;
+}
+
+.trinetra-loader-subtext {
+    font-family: var(--font-hindi);
+    font-size: 13px;
+    color: var(--gold);
+    margin-top: 10px;
+    letter-spacing: 1px;
+    opacity: 0.7;
+    animation: text-breathe 2.5s ease-in-out infinite;
+}
+
+@keyframes text-shimmer {
+    0%, 100% { opacity: 0.6; filter: brightness(1); }
+    50% { opacity: 1; filter: brightness(1.3); }
+}
+
+@keyframes text-breathe {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.9; }
+}
+
+
+/* ═══════════════════════════════════════════════
+   §4  TOAST
+   ═══════════════════════════════════════════════ */
+
 .trinetra-toast {
     position: fixed;
     bottom: 40px;
     left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    
-    background: var(--bg-dark);
-    border: 1px solid var(--border-glow);
-    box-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
-    
-    color: var(--real-color);
-    padding: 12px 30px;
-    border-radius: 4px;
-    font-family: var(--font-head);
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
+    transform: translateX(-50%) translateY(80px) scale(0.95);
+    background: var(--surface-glass);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-accent);
+    box-shadow: var(--glass-shadow);
+    color: var(--text-primary);
+    padding: 14px 30px;
+    border-radius: 100px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
     z-index: 2147483647;
-    transition: transform 0.5s cubic-bezier(0.2, 1, 0.3, 1);
-    backdrop-filter: blur(10px);
+    transition:
+        transform 0.5s var(--ease-spring),
+        opacity 0.5s var(--ease-silk);
+    opacity: 0;
 }
 
 .trinetra-toast.show {
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(-50%) translateY(0) scale(1);
+    opacity: 1;
 }
 
-.trinetra-toast.loading {
-    border-color: var(--real-color);
-    color: var(--real-color);
-    animation: pulse-border 1.5s infinite;
+.trinetra-toast.error {
+    border-color: var(--fake-color);
+    color: var(--fake-color);
 }
 
-@keyframes pulse-border {
-    0%, 100% { box-shadow: 0 0 10px rgba(0, 243, 255, 0.2); }
-    50% { box-shadow: 0 0 25px rgba(0, 243, 255, 0.6); }
-}
 
-/* Modal HUD */
+/* ═══════════════════════════════════════════════
+   §5  RESULT MODAL
+   ═══════════════════════════════════════════════ */
+
 .trinetra-modal {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(12px);
+    background: rgba(5, 5, 6, 0.65);
+    backdrop-filter: blur(12px) saturate(120%);
+    -webkit-backdrop-filter: blur(12px) saturate(120%);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 2147483647;
-    animation: fade-in-bg 0.4s ease-out;
+    animation: silk-fade-in 0.35s var(--ease-silk);
 }
 
-@keyframes fade-in-bg {
+@keyframes silk-fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
 }
 
+/* ── Card with silk border ── */
 .trinetra-modal-content {
-    background: linear-gradient(135deg, rgba(7,10,19,0.95) 0%, rgba(13,18,30,0.9) 100%);
-    border: 1px solid rgba(255,255,255,0.1);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.05);
-    width: 500px;
-    padding: 30px;
+    background: var(--surface-0);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    width: 540px;
+    max-height: 88vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0;
     position: relative;
-    color: var(--text-main);
+    color: var(--text-primary);
     font-family: var(--font-body);
-    clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
-    transform: scale(0.9) translateY(20px);
-    animation: hud-pop 0.5s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+    border-radius: var(--radius-xl);
+    transform: scale(0.92) translateY(20px);
+    animation: silk-card-in 0.6s var(--ease-spring) forwards;
+    border: 1px solid var(--border-normal);
+    box-shadow:
+        0 0 0 1px rgba(255, 123, 46, 0.06),
+        0 24px 80px rgba(0, 0, 0, 0.5),
+        0 8px 24px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
+/* Peacock iridescent border — animated conic gradient */
 .trinetra-modal-content::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: 
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px) 0 0 / 20px 20px,
-        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px) 0 0 / 20px 20px;
-    pointer-events: none;
-    z-index: 0;
+    inset: -1.5px;
+    border-radius: calc(var(--radius-xl) + 1.5px);
+    background: conic-gradient(
+        from var(--peacock-angle, 0deg),
+        rgba(255, 123, 46, 0.4),
+        rgba(212, 160, 23, 0.3),
+        rgba(24, 180, 184, 0.25),
+        rgba(91, 95, 199, 0.2),
+        rgba(230, 74, 138, 0.2),
+        rgba(255, 123, 46, 0.4)
+    );
+    z-index: -1;
+    animation: peacock-shimmer 8s linear infinite;
+    opacity: 0.6;
 }
 
-@keyframes hud-pop {
-    to { transform: scale(1) translateY(0); }
+.trinetra-modal-content::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-xl);
+    background: var(--surface-0);
+    z-index: -1;
 }
+
+@property --peacock-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+
+@keyframes peacock-shimmer {
+    to { --peacock-angle: 360deg; }
+}
+
+@keyframes silk-card-in {
+    to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Silk shine overlay on card */
+.trinetra-modal-inner {
+    position: relative;
+    padding: 36px;
+}
+
+.trinetra-modal-inner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 160px;
+    background: var(--silk-night);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    pointer-events: none;
+    opacity: 0.5;
+}
+
+/* Custom scrollbar */
+.trinetra-modal-content::-webkit-scrollbar {
+    width: 4px;
+}
+
+.trinetra-modal-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.trinetra-modal-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 123, 46, 0.2);
+    border-radius: 4px;
+}
+
+.trinetra-modal-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 123, 46, 0.35);
+}
+
+
+/* ═══════════════════════════════════════════════
+   §6  HEADER
+   ═══════════════════════════════════════════════ */
 
 .trinetra-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid rgba(255,255,255,0.1);
-    padding-bottom: 15px;
-    margin-bottom: 25px;
+    align-items: flex-start;
+    padding-bottom: 20px;
+    margin-bottom: 28px;
     position: relative;
     z-index: 1;
+    opacity: 0;
+    animation: silk-section-in 0.6s var(--ease-spring) 0.1s forwards;
+}
+
+/* Silk thread separator */
+.trinetra-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--gold-soft) 15%,
+        rgba(255, 123, 46, 0.15) 50%,
+        var(--gold-soft) 85%,
+        transparent 100%
+    );
+}
+
+.trinetra-brand-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .trinetra-brand {
-    font-family: var(--font-head);
-    font-size: 16px;
-    font-weight: 900;
-    letter-spacing: 3px;
-    color: #fff;
-    text-shadow: 0 0 10px rgba(255,255,255,0.5);
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 5px;
+    background: var(--silk-saffron);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
 }
 
 .trinetra-brand span {
-    color: var(--real-color);
+    -webkit-text-fill-color: var(--text-tertiary);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 2px;
+}
+
+.trinetra-hindi-sub {
+    font-family: var(--font-hindi);
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 0.5px;
+    opacity: 0.7;
+}
+
+.trinetra-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .trinetra-latency {
-    font-family: var(--font-head);
-    font-size: 12px;
-    color: var(--real-color);
-    background: rgba(0, 243, 255, 0.1);
-    padding: 4px 10px;
-    border: 1px solid rgba(0, 243, 255, 0.3);
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--peacock-teal);
+    background: rgba(24, 180, 184, 0.06);
+    padding: 5px 14px;
+    border: 1px solid rgba(24, 180, 184, 0.12);
+    border-radius: 100px;
+    letter-spacing: 0.5px;
 }
+
+.trinetra-close {
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    z-index: 10;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--surface-2);
+    border: 1px solid var(--border-normal);
+    transition: all 0.3s var(--ease-silk);
+    flex-shrink: 0;
+}
+
+.trinetra-close:hover {
+    color: var(--text-primary);
+    border-color: var(--saffron);
+    background: var(--saffron-soft);
+    transform: rotate(90deg) scale(1.05);
+    box-shadow: 0 0 16px rgba(255, 123, 46, 0.15);
+}
+
+
+/* ═══════════════════════════════════════════════
+   §7  CONFIDENCE GAUGE
+   ═══════════════════════════════════════════════ */
+
+.trinetra-gauge-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 1;
+    opacity: 0;
+    animation: silk-section-in 0.6s var(--ease-spring) 0.2s forwards;
+}
+
+.trinetra-gauge-svg {
+    width: 220px;
+    height: 120px;
+    overflow: visible;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+}
+
+.trinetra-gauge-track {
+    fill: none;
+    stroke: var(--surface-3);
+    stroke-width: 10;
+    stroke-linecap: round;
+}
+
+.trinetra-gauge-fill {
+    fill: none;
+    stroke-width: 10;
+    stroke-linecap: round;
+    transition:
+        stroke-dashoffset 1.8s var(--ease-spring),
+        stroke 0.5s var(--ease-silk);
+    filter: drop-shadow(0 0 8px currentColor);
+}
+
+.trinetra-gauge-value {
+    font-family: var(--font-display);
+    font-size: 30px;
+    font-weight: 800;
+    fill: var(--text-primary);
+    text-anchor: middle;
+    dominant-baseline: middle;
+}
+
+.trinetra-gauge-unit {
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 600;
+    fill: var(--text-tertiary);
+    text-anchor: middle;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+
+/* ═══════════════════════════════════════════════
+   §8  VERDICT PANEL
+   ═══════════════════════════════════════════════ */
 
 .trinetra-verdict-main {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 30px 20px;
-    background: rgba(0,0,0,0.4);
-    border: 1px solid rgba(255,255,255,0.05);
-    margin-bottom: 25px;
+    padding: 28px 24px 24px;
+    background: var(--surface-1);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    margin-bottom: 20px;
     position: relative;
     z-index: 1;
     overflow: hidden;
+    opacity: 0;
+    animation: silk-section-in 0.6s var(--ease-spring) 0.3s forwards;
+    transition: border-color 0.4s var(--ease-silk), background 0.4s var(--ease-silk);
 }
 
-/* Dynamic glow based on status */
-.trinetra-verdict-main.status-fake {
-    border-color: var(--fake-color);
-    box-shadow: inset 0 0 30px rgba(255, 0, 60, 0.15);
+/* Silk sheen overlay */
+.trinetra-verdict-main::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--glass-shine);
+    pointer-events: none;
+    border-radius: var(--radius-lg);
 }
+
+/* Yantra corner marks — sacred geometry */
+.trinetra-yantra-tl,
+.trinetra-yantra-tr,
+.trinetra-yantra-bl,
+.trinetra-yantra-br {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    border-style: solid;
+    border-color: var(--gold);
+    opacity: 0.2;
+    transition: opacity 0.4s, border-color 0.4s;
+}
+
+.trinetra-yantra-tl {
+    top: 8px;
+    left: 8px;
+    border-width: 2px 0 0 2px;
+    border-radius: 4px 0 0 0;
+}
+
+.trinetra-yantra-tr {
+    top: 8px;
+    right: 8px;
+    border-width: 2px 2px 0 0;
+    border-radius: 0 4px 0 0;
+}
+
+.trinetra-yantra-bl {
+    bottom: 8px;
+    left: 8px;
+    border-width: 0 0 2px 2px;
+    border-radius: 0 0 0 4px;
+}
+
+.trinetra-yantra-br {
+    bottom: 8px;
+    right: 8px;
+    border-width: 0 2px 2px 0;
+    border-radius: 0 0 4px 0;
+}
+
+/* Status states */
+.trinetra-verdict-main.status-fake {
+    border-color: rgba(255, 71, 87, 0.2);
+    background: linear-gradient(135deg, var(--fake-soft) 0%, var(--surface-1) 60%);
+    box-shadow: inset 0 0 60px rgba(255, 71, 87, 0.04);
+}
+
+.trinetra-verdict-main.status-fake .trinetra-yantra-tl,
+.trinetra-verdict-main.status-fake .trinetra-yantra-tr,
+.trinetra-verdict-main.status-fake .trinetra-yantra-bl,
+.trinetra-verdict-main.status-fake .trinetra-yantra-br {
+    border-color: var(--fake-color);
+    opacity: 0.3;
+}
+
 .trinetra-verdict-main.status-real {
+    border-color: rgba(46, 213, 115, 0.2);
+    background: linear-gradient(135deg, var(--real-soft) 0%, var(--surface-1) 60%);
+    box-shadow: inset 0 0 60px rgba(46, 213, 115, 0.04);
+}
+
+.trinetra-verdict-main.status-real .trinetra-yantra-tl,
+.trinetra-verdict-main.status-real .trinetra-yantra-tr,
+.trinetra-verdict-main.status-real .trinetra-yantra-bl,
+.trinetra-verdict-main.status-real .trinetra-yantra-br {
     border-color: var(--real-color);
-    box-shadow: inset 0 0 30px rgba(0, 243, 255, 0.15);
+    opacity: 0.3;
 }
 
 .trinetra-verdict-label {
-    font-family: var(--font-head);
-    font-size: 42px;
-    font-weight: 900;
-    letter-spacing: 4px;
-    margin-bottom: 5px;
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: 8px;
+    margin-bottom: 6px;
     text-transform: uppercase;
+    position: relative;
 }
 
 .status-fake .trinetra-verdict-label {
     color: var(--fake-color);
-    text-shadow: 0 0 20px rgba(255,0,60,0.6);
+    text-shadow: 0 0 30px var(--fake-glow), 0 0 60px rgba(255, 71, 87, 0.1);
 }
+
 .status-real .trinetra-verdict-label {
     color: var(--real-color);
-    text-shadow: 0 0 20px rgba(0,243,255,0.6);
+    text-shadow: 0 0 30px var(--real-glow), 0 0 60px rgba(46, 213, 115, 0.1);
 }
 
 .trinetra-verdict-sub {
-    font-family: var(--font-head);
-    font-size: 10px;
-    color: #fff;
-    letter-spacing: 2px;
-    opacity: 0.6;
+    font-family: var(--font-body);
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    letter-spacing: 3px;
+    text-transform: uppercase;
 }
+
+/* Hindi verdict label */
+.trinetra-verdict-hindi {
+    font-family: var(--font-hindi);
+    font-size: 12px;
+    color: var(--gold);
+    margin-top: 8px;
+    opacity: 0.6;
+    letter-spacing: 0.5px;
+}
+
+
+/* ═══════════════════════════════════════════════
+   §9  FACE + GRAD-CAM ROW
+   ═══════════════════════════════════════════════ */
+
+.trinetra-visuals-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 18px;
+    opacity: 0;
+    animation: silk-section-in 0.6s var(--ease-spring) 0.4s forwards;
+}
+
+.trinetra-visual-card {
+    background: var(--surface-1);
+    border: 1px solid var(--border-normal);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: border-color 0.3s var(--ease-silk), transform 0.3s var(--ease-silk);
+    position: relative;
+}
+
+.trinetra-visual-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--glass-shine);
+    pointer-events: none;
+    border-radius: var(--radius-md);
+}
+
+.trinetra-visual-card:hover {
+    border-color: var(--border-accent);
+    transform: translateY(-2px);
+}
+
+.trinetra-visual-card-label {
+    font-family: var(--font-body);
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 12px 14px 8px;
+    width: 100%;
+    text-align: center;
+}
+
+.trinetra-face-crop-wrap {
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.trinetra-face-crop-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid var(--border-strong);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    transition: border-color 0.4s var(--ease-silk), box-shadow 0.4s var(--ease-silk);
+}
+
+.status-fake-parent .trinetra-face-crop-circle {
+    border-color: var(--fake-color);
+    box-shadow: 0 0 20px var(--fake-glow), 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.status-real-parent .trinetra-face-crop-circle {
+    border-color: var(--real-color);
+    box-shadow: 0 0 20px var(--real-glow), 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.trinetra-face-crop-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.trinetra-no-face {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 2px dashed var(--text-hint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: var(--text-tertiary);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 8px;
+}
+
+.trinetra-gradcam-wrap {
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.trinetra-gradcam-img {
+    width: 100%;
+    max-height: 120px;
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+    opacity: 0.85;
+    transition: opacity 0.3s var(--ease-silk), transform 0.3s var(--ease-silk);
+}
+
+.trinetra-gradcam-img:hover {
+    opacity: 1;
+    transform: scale(1.03);
+}
+
+.trinetra-no-gradcam {
+    padding: 16px 12px;
+    text-align: center;
+    font-size: 9px;
+    color: var(--text-tertiary);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+
+/* ═══════════════════════════════════════════════
+   §10  STATS GRID
+   ═══════════════════════════════════════════════ */
 
 .trinetra-results-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-bottom: 25px;
+    gap: 12px;
+    margin-bottom: 18px;
     position: relative;
     z-index: 1;
+    opacity: 0;
+    animation: silk-section-in 0.6s var(--ease-spring) 0.5s forwards;
 }
 
 .trinetra-result-cell {
-    background: rgba(0,0,0,0.3);
-    border: 1px solid rgba(255,255,255,0.05);
-    padding: 15px;
+    background: var(--surface-1);
+    border: 1px solid var(--border-normal);
+    border-radius: var(--radius-md);
+    padding: 16px;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    border-left: 3px solid rgba(255,255,255,0.2);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s var(--ease-silk), transform 0.3s var(--ease-silk);
+}
+
+.trinetra-result-cell::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--glass-shine);
+    pointer-events: none;
+}
+
+.trinetra-result-cell:hover {
+    border-color: var(--border-accent);
+    transform: translateY(-1px);
 }
 
 .trinetra-label {
-    font-family: var(--font-head);
-    font-size: 10px;
-    color: var(--text-muted);
-    letter-spacing: 1px;
+    font-family: var(--font-body);
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    letter-spacing: 2px;
+    text-transform: uppercase;
     margin-bottom: 8px;
 }
 
 .trinetra-value {
-    font-size: 18px;
+    font-family: var(--font-display);
+    font-size: 16px;
     font-weight: 700;
-    color: #fff;
+    color: var(--text-primary);
 }
 
-.trinetra-value.fake-text { color: var(--fake-color); }
-.trinetra-value.real-text { color: var(--real-color); }
-.trinetra-value.muted { color: #555; font-style: italic; }
+.trinetra-value.fake-text {
+    color: var(--fake-color);
+    text-shadow: 0 0 12px rgba(255, 71, 87, 0.15);
+}
+
+.trinetra-value.real-text {
+    color: var(--real-color);
+    text-shadow: 0 0 12px rgba(46, 213, 115, 0.15);
+}
+
+.trinetra-value.muted {
+    color: var(--text-tertiary);
+    font-style: italic;
+    font-size: 13px;
+}
+
+
+/* ═══════════════════════════════════════════════
+   §11  FORENSIC SUMMARY
+   ═══════════════════════════════════════════════ */
 
 .trinetra-summary {
-    font-size: 16px;
-    line-height: 1.5;
-    color: var(--text-main);
-    background: rgba(0,0,0,0.5);
-    padding: 20px;
-    border: 1px dashed rgba(255,255,255,0.2);
+    font-family: var(--font-body);
+    font-size: 13px;
+    line-height: 1.8;
+    font-weight: 400;
+    color: var(--text-secondary);
+    background: var(--surface-1);
+    padding: 18px 20px;
+    border: 1px solid var(--border-normal);
+    border-radius: var(--radius-md);
     position: relative;
     z-index: 1;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
+    opacity: 0;
+    animation: silk-section-in 0.6s var(--ease-spring) 0.6s forwards;
+    overflow: hidden;
 }
+
+.trinetra-summary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--silk-saffron);
+    border-radius: 3px 0 0 3px;
+}
+
+
+/* ═══════════════════════════════════════════════
+   §12  ACTION BUTTONS
+   ═══════════════════════════════════════════════ */
+
+.trinetra-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+    opacity: 0;
+    animation: silk-section-in 0.6s var(--ease-spring) 0.7s forwards;
+}
+
+.trinetra-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-normal);
+    background: var(--surface-1);
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-silk);
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.trinetra-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--glass-shine);
+    pointer-events: none;
+}
+
+.trinetra-btn:hover {
+    background: var(--saffron-soft);
+    border-color: var(--saffron);
+    color: var(--saffron);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(255, 123, 46, 0.1);
+}
+
+.trinetra-btn:active {
+    transform: translateY(0);
+}
+
+.trinetra-btn-icon {
+    font-size: 13px;
+    line-height: 1;
+}
+
+.trinetra-btn.success {
+    border-color: var(--real-color);
+    color: var(--real-color);
+    background: var(--real-soft);
+}
+
+.trinetra-btn.retry-btn {
+    border-color: var(--saffron);
+    color: var(--saffron);
+    background: var(--saffron-soft);
+}
+
+.trinetra-btn.retry-btn:hover {
+    background: rgba(255, 123, 46, 0.15);
+    box-shadow: 0 4px 20px rgba(255, 123, 46, 0.15);
+}
+
+.trinetra-actions-spacer {
+    flex: 1;
+}
+
+
+/* ═══════════════════════════════════════════════
+   §13  FOOTER
+   ═══════════════════════════════════════════════ */
 
 .trinetra-footer {
-    font-family: var(--font-head);
-    font-size: 10px;
-    color: var(--text-muted);
-    text-align: right;
-    letter-spacing: 1px;
-    opacity: 0.5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-body);
+    font-size: 9px;
+    font-weight: 500;
+    color: var(--text-hint);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
     position: relative;
     z-index: 1;
+    opacity: 0;
+    padding-top: 14px;
+    animation: silk-section-in 0.6s var(--ease-spring) 0.8s forwards;
 }
 
-.trinetra-close {
+/* Top separator — silk thread */
+.trinetra-footer::before {
+    content: '';
     position: absolute;
-    top: 25px;
-    right: 25px;
-    font-family: var(--font-head);
-    font-size: 20px;
-    color: rgba(255,255,255,0.5);
-    cursor: pointer;
-    z-index: 10;
-    transition: all 0.2s;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--gold-soft) 20%,
+        rgba(255, 123, 46, 0.1) 50%,
+        var(--gold-soft) 80%,
+        transparent 100%
+    );
 }
 
-.trinetra-close:hover {
-    color: #fff;
-    transform: rotate(90deg);
+.trinetra-footer-source {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.trinetra-footer-source-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.trinetra-footer-source-dot.online {
+    background: var(--real-color);
+    box-shadow: 0 0 8px var(--real-glow);
+    animation: dot-pulse 2s ease-in-out infinite;
+}
+
+.trinetra-footer-source-dot.offline {
+    background: var(--text-tertiary);
+}
+
+@keyframes dot-pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
+.trinetra-footer-esc {
+    color: var(--text-hint);
+}
+
+
+/* ═══════════════════════════════════════════════
+   §14  HISTORY DRAWER
+   ═══════════════════════════════════════════════ */
+
+.trinetra-history-drawer {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 400px;
+    height: 100vh;
+    background: var(--surface-0);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-left: 1px solid var(--border-normal);
+    box-shadow: -12px 0 60px rgba(0, 0, 0, 0.5);
+    z-index: 2147483647;
+    transition: right 0.5s var(--ease-spring);
+    display: flex;
+    flex-direction: column;
+}
+
+.trinetra-history-drawer.open {
+    right: 0;
+}
+
+.trinetra-history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 28px 24px;
+    border-bottom: 1px solid var(--border-normal);
+    position: relative;
+}
+
+/* Decorative bottom border */
+.trinetra-history-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-soft), rgba(255,123,46,0.1), var(--gold-soft), transparent);
+}
+
+.trinetra-history-title {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    background: var(--silk-saffron);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-transform: uppercase;
+}
+
+.trinetra-history-close {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--surface-2);
+    border: 1px solid var(--border-normal);
+    color: var(--text-tertiary);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s var(--ease-silk);
+}
+
+.trinetra-history-close:hover {
+    border-color: var(--saffron);
+    color: var(--text-primary);
+    background: var(--saffron-soft);
+}
+
+.trinetra-history-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.trinetra-history-list::-webkit-scrollbar {
+    width: 3px;
+}
+
+.trinetra-history-list::-webkit-scrollbar-thumb {
+    background: rgba(255, 123, 46, 0.15);
+    border-radius: 3px;
+}
+
+.trinetra-history-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    margin-bottom: 10px;
+    transition: all 0.3s var(--ease-silk);
+    cursor: default;
+    position: relative;
+    overflow: hidden;
+}
+
+.trinetra-history-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--glass-shine);
+    pointer-events: none;
+}
+
+.trinetra-history-item:hover {
+    background: var(--surface-2);
+    border-color: var(--border-normal);
+    transform: translateX(-2px);
+}
+
+.trinetra-history-verdict-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: box-shadow 0.3s;
+}
+
+.trinetra-history-verdict-dot.fake {
+    background: var(--fake-color);
+    box-shadow: 0 0 10px var(--fake-glow);
+}
+
+.trinetra-history-verdict-dot.real {
+    background: var(--real-color);
+    box-shadow: 0 0 10px var(--real-glow);
+}
+
+.trinetra-history-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.trinetra-history-info-verdict {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+    letter-spacing: 1px;
+}
+
+.trinetra-history-info-meta {
+    font-size: 10px;
+    color: var(--text-tertiary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.trinetra-history-confidence {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.trinetra-history-empty {
+    text-align: center;
+    padding: 60px 24px;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    letter-spacing: 1px;
+    line-height: 1.8;
+}
+
+
+/* ═══════════════════════════════════════════════
+   §15  ERROR STATE
+   ═══════════════════════════════════════════════ */
+
+.trinetra-error-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 28px;
+    text-align: center;
+}
+
+.trinetra-error-icon {
+    font-size: 44px;
+    margin-bottom: 20px;
+    opacity: 0.85;
+    animation: error-shake 0.6s var(--ease-spring);
+}
+
+@keyframes error-shake {
+    0%, 100% { transform: translateX(0); }
+    15% { transform: translateX(-6px) rotate(-2deg); }
+    30% { transform: translateX(5px) rotate(1deg); }
+    45% { transform: translateX(-4px) rotate(-1deg); }
+    60% { transform: translateX(3px); }
+    75% { transform: translateX(-2px); }
+}
+
+.trinetra-error-title {
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: var(--fake-color);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    text-shadow: 0 0 20px rgba(255, 71, 87, 0.15);
+}
+
+.trinetra-error-msg {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    line-height: 1.7;
+    margin-bottom: 24px;
+    max-width: 340px;
+}
+
+
+/* ═══════════════════════════════════════════════
+   §16  SHARED ANIMATIONS
+   ═══════════════════════════════════════════════ */
+
+@keyframes silk-section-in {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+        filter: blur(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+}
+
+/* ── Focus ring override for all interactive ── */
+.trinetra-btn:focus-visible,
+.trinetra-close:focus-visible,
+.trinetra-history-close:focus-visible {
+    outline: 2px solid var(--saffron);
+    outline-offset: 2px;
+}
+
+/* ── Print safety ── */
+@media print {
+    .trinetra-modal,
+    .trinetra-toast,
+    .trinetra-loader-overlay,
+    .trinetra-selection-overlay,
+    .trinetra-history-drawer {
+        display: none !important;
+    }
 }
