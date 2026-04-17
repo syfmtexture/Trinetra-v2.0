@@ -1,0 +1,338 @@
+/* ═══════════════════════════════════════════════════════════
+   popup.css — Trinetra Extension Popup
+   Theme: Orange / Purple / Navy (from logo)
+   ═══════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --primary-orange: #FF6B00;
+  --primary-purple: #6B2FA0;
+  --gold: #FFAB00;
+  --navy-dark: #0D0A1A;
+  --navy-mid: #1A1230;
+  --navy-light: #2A1E45;
+  --text-primary: #F0E6FF;
+  --text-muted: #9B8ABF;
+  --fake-red: #FF003C;
+  --real-green: #00E676;
+  --gradient-brand: linear-gradient(135deg, var(--primary-orange), var(--primary-purple));
+  --gradient-card: linear-gradient(135deg, rgba(107, 47, 160, 0.15), rgba(255, 107, 0, 0.08));
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 360px;
+  background: var(--navy-dark);
+  color: var(--text-primary);
+  font-family: 'Outfit', -apple-system, sans-serif;
+  overflow: hidden;
+}
+
+/* ── Header ── */
+.tri-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 20px 16px;
+  background: linear-gradient(180deg, rgba(107, 47, 160, 0.2) 0%, transparent 100%);
+}
+
+.tri-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  filter: drop-shadow(0 0 12px rgba(255, 107, 0, 0.4));
+  animation: logo-pulse 3s ease-in-out infinite;
+}
+
+@keyframes logo-pulse {
+  0%, 100% { filter: drop-shadow(0 0 12px rgba(255, 107, 0, 0.4)); }
+  50% { filter: drop-shadow(0 0 20px rgba(107, 47, 160, 0.6)); }
+}
+
+.tri-brand {
+  display: flex;
+  flex-direction: column;
+}
+
+.tri-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  background: var(--gradient-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.tri-subtitle {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* ── Divider ── */
+.tri-divider {
+  height: 1px;
+  margin: 0 20px;
+  background: linear-gradient(90deg, transparent, var(--primary-purple), var(--primary-orange), transparent);
+  opacity: 0.4;
+}
+
+/* ── Section ── */
+.tri-section {
+  padding: 16px 20px;
+}
+
+.tri-section-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  text-transform: uppercase;
+}
+
+.tri-section-icon {
+  width: 16px;
+  height: 16px;
+  opacity: 0.7;
+}
+
+/* ── Toggle Rows ── */
+.tri-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  background: var(--gradient-card);
+  border: 1px solid rgba(107, 47, 160, 0.2);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.tri-toggle-row:hover {
+  border-color: rgba(255, 107, 0, 0.3);
+  background: linear-gradient(135deg, rgba(107, 47, 160, 0.2), rgba(255, 107, 0, 0.12));
+}
+
+.tri-toggle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tri-toggle-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tri-toggle-desc {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+/* ── Custom Toggle Switch ── */
+.tri-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.tri-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.tri-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tri-slider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 2px;
+  bottom: 2px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.tri-switch input:checked + .tri-slider {
+  background: linear-gradient(135deg, var(--primary-orange), var(--primary-purple));
+  border-color: rgba(255, 107, 0, 0.4);
+  box-shadow: 0 0 12px rgba(255, 107, 0, 0.25);
+}
+
+.tri-switch input:checked + .tri-slider::before {
+  transform: translateX(20px);
+  background: #fff;
+  box-shadow: 0 0 6px rgba(255, 107, 0, 0.4);
+}
+
+/* ── Warning Toast ── */
+.tri-warning {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  margin: 0 20px 8px;
+  padding: 8px 12px;
+  background: rgba(255, 171, 0, 0.1);
+  border: 1px solid rgba(255, 171, 0, 0.3);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--gold);
+  animation: shake 0.4s ease;
+}
+
+.tri-warning.visible {
+  display: flex;
+}
+
+.tri-warning-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+
+/* ── Scan Button ── */
+.tri-scan-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: calc(100% - 40px);
+  margin: 4px 20px 16px;
+  padding: 14px 20px;
+  background: var(--gradient-brand);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(255, 107, 0, 0.3);
+}
+
+.tri-scan-btn::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%; right: 0; bottom: 0;
+  width: 200%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  transition: left 0.6s ease;
+}
+
+.tri-scan-btn:hover {
+  box-shadow: 0 6px 28px rgba(255, 107, 0, 0.45);
+  transform: translateY(-1px);
+}
+
+.tri-scan-btn:hover::before {
+  left: 100%;
+}
+
+.tri-scan-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 12px rgba(255, 107, 0, 0.25);
+}
+
+.tri-scan-icon {
+  width: 22px;
+  height: 22px;
+  filter: brightness(10);
+}
+
+/* ── Footer ── */
+.tri-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.tri-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tri-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  transition: background 0.3s;
+}
+
+.tri-status-dot.online {
+  background: var(--real-green);
+  box-shadow: 0 0 8px rgba(0, 230, 118, 0.5);
+  animation: dot-blink 2s ease-in-out infinite;
+}
+
+.tri-status-dot.offline {
+  background: var(--fake-red);
+  box-shadow: 0 0 8px rgba(255, 0, 60, 0.4);
+}
+
+@keyframes dot-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.tri-status-text {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.tri-version {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(155, 138, 191, 0.4);
+  letter-spacing: 1px;
+}

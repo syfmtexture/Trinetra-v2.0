@@ -65,6 +65,15 @@ python api.py
 ```
 *Runs by default on http://127.0.0.1:8000/*
 
+**WhatsApp Bot:**
+
+Run the deepfake scanner as a WhatsApp chatbot (requires Meta Cloud API credentials in `.env`):
+```bash
+cd backend
+python whatsapp_bot.py
+```
+*Runs on http://127.0.0.1:5000/ — expose via ngrok for Meta webhook.*
+
 ### 5. Chrome Extension Installation
 
 1. Navigate to `chrome://extensions/` in Chrome or Chromium-based browsers.

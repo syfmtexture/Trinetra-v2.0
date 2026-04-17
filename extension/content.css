@@ -1,44 +1,51 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;600;700&display=swap');
+/* ═══════════════════════════════════════════════════════════
+   content.css — Trinetra In-Page UI
+   Theme: Orange / Purple / Navy (from logo)
+   ═══════════════════════════════════════════════════════════ */
 
-/**
- * content.css — Trinetra extension UI styling
- * Theme: Cyber-Forensic HUD
- */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
 
 :root {
-    --bg-dark: rgba(7, 10, 19, 0.85);
-    --border-glow: rgba(0, 243, 255, 0.3);
-    --text-main: #e0f2fe;
-    --text-muted: #7dd3fc;
-    --fake-color: #ff003c;
-    --real-color: #00f3ff;
-    --font-head: 'Orbitron', sans-serif;
-    --font-body: 'Rajdhani', sans-serif;
+    --tri-orange: #FF6B00;
+    --tri-purple: #6B2FA0;
+    --tri-gold: #FFAB00;
+    --tri-navy-dark: #0D0A1A;
+    --tri-navy-mid: #1A1230;
+    --tri-navy-light: #2A1E45;
+    --tri-text: #F0E6FF;
+    --tri-text-muted: #9B8ABF;
+    --tri-fake: #FF003C;
+    --tri-real: #00E676;
+    --tri-gradient: linear-gradient(135deg, #FF6B00, #6B2FA0);
+    --tri-font: 'Outfit', -apple-system, sans-serif;
 }
 
+/* ── Selection Overlay ── */
 .trinetra-selection-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%);
+    background: radial-gradient(circle at center, rgba(13,10,26,0.5) 0%, rgba(13,10,26,0.85) 100%);
     z-index: 2147483647;
     cursor: crosshair;
-    backdrop-filter: saturate(120%) blur(4px);
-    -webkit-backdrop-filter: saturate(120%) blur(4px);
+    backdrop-filter: saturate(120%) blur(3px);
+    -webkit-backdrop-filter: saturate(120%) blur(3px);
 }
 
+/* ── Selection Box ── */
 .trinetra-selection-box {
     position: fixed;
-    border: 1px solid var(--real-color);
-    background: rgba(0, 243, 255, 0.05);
-    box-shadow: 0 0 15px var(--border-glow), inset 0 0 20px rgba(0, 243, 255, 0.1);
+    border: 2px solid var(--tri-orange);
+    background: rgba(255, 107, 0, 0.06);
+    box-shadow: 0 0 20px rgba(255, 107, 0, 0.2), inset 0 0 20px rgba(107, 47, 160, 0.08);
     pointer-events: none;
     z-index: 2147483647;
+    border-radius: 4px;
 }
 
-/* Scanner line animation inside the selection box while scanning */
+/* Scanner line animation */
 .trinetra-selection-box::after {
     content: '';
     position: absolute;
@@ -46,9 +53,9 @@
     left: 0;
     width: 100%;
     height: 2px;
-    background: var(--real-color);
-    box-shadow: 0 0 10px var(--real-color);
-    animation: scanline 2s linear infinite;
+    background: linear-gradient(90deg, transparent, var(--tri-orange), var(--tri-purple), transparent);
+    box-shadow: 0 0 12px var(--tri-orange);
+    animation: tri-scanline 1.8s linear infinite;
     display: none;
 }
 
@@ -56,35 +63,34 @@
     display: block;
 }
 
-@keyframes scanline {
+@keyframes tri-scanline {
     0% { top: 0; opacity: 0; }
     10% { opacity: 1; }
     90% { opacity: 1; }
     100% { top: 100%; opacity: 0; }
 }
 
-/* Toast */
+/* ── Toast ── */
 .trinetra-toast {
     position: fixed;
     bottom: 40px;
     left: 50%;
     transform: translateX(-50%) translateY(100px);
-    
-    background: var(--bg-dark);
-    border: 1px solid var(--border-glow);
-    box-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
-    
-    color: var(--real-color);
-    padding: 12px 30px;
-    border-radius: 4px;
-    font-family: var(--font-head);
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
+
+    background: var(--tri-navy-dark);
+    border: 1px solid rgba(255, 107, 0, 0.3);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+
+    color: var(--tri-text);
+    padding: 12px 28px;
+    border-radius: 12px;
+    font-family: var(--tri-font);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
     z-index: 2147483647;
     transition: transform 0.5s cubic-bezier(0.2, 1, 0.3, 1);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(16px);
 }
 
 .trinetra-toast.show {
@@ -92,222 +98,268 @@
 }
 
 .trinetra-toast.loading {
-    border-color: var(--real-color);
-    color: var(--real-color);
-    animation: pulse-border 1.5s infinite;
+    border-color: var(--tri-orange);
+    color: var(--tri-orange);
+    animation: tri-pulse-border 1.5s infinite;
 }
 
-@keyframes pulse-border {
-    0%, 100% { box-shadow: 0 0 10px rgba(0, 243, 255, 0.2); }
-    50% { box-shadow: 0 0 25px rgba(0, 243, 255, 0.6); }
+.trinetra-toast.error {
+    border-color: var(--tri-fake);
+    color: var(--tri-fake);
 }
 
-/* Modal HUD */
+@keyframes tri-pulse-border {
+    0%, 100% { box-shadow: 0 0 10px rgba(255, 107, 0, 0.15); }
+    50% { box-shadow: 0 0 25px rgba(255, 107, 0, 0.4); }
+}
+
+/* ── Modal ── */
 .trinetra-modal {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(12px);
+    background: rgba(13, 10, 26, 0.7);
+    backdrop-filter: blur(16px);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 2147483647;
-    animation: fade-in-bg 0.4s ease-out;
+    animation: tri-fade-in 0.4s ease-out;
 }
 
-@keyframes fade-in-bg {
+@keyframes tri-fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
 }
 
 .trinetra-modal-content {
-    background: linear-gradient(135deg, rgba(7,10,19,0.95) 0%, rgba(13,18,30,0.9) 100%);
-    border: 1px solid rgba(255,255,255,0.1);
-    box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(255,255,255,0.05);
-    width: 500px;
-    padding: 30px;
+    background: linear-gradient(160deg, rgba(26,18,48,0.97) 0%, rgba(13,10,26,0.98) 100%);
+    border: 1px solid rgba(107, 47, 160, 0.25);
+    box-shadow:
+        0 24px 64px rgba(0,0,0,0.7),
+        0 0 0 1px rgba(255, 107, 0, 0.08),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+    width: 460px;
+    max-width: 90vw;
+    padding: 0;
     position: relative;
-    color: var(--text-main);
-    font-family: var(--font-body);
-    clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
-    transform: scale(0.9) translateY(20px);
-    animation: hud-pop 0.5s cubic-bezier(0.2, 1, 0.3, 1) forwards;
+    color: var(--tri-text);
+    font-family: var(--tri-font);
+    border-radius: 20px;
+    overflow: hidden;
+    transform: scale(0.92) translateY(20px);
+    animation: tri-hud-pop 0.5s cubic-bezier(0.2, 1, 0.3, 1) forwards;
 }
 
-.trinetra-modal-content::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: 
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px) 0 0 / 20px 20px,
-        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px) 0 0 / 20px 20px;
-    pointer-events: none;
-    z-index: 0;
-}
-
-@keyframes hud-pop {
+@keyframes tri-hud-pop {
     to { transform: scale(1) translateY(0); }
 }
 
-.trinetra-header {
+/* ── Modal Header ── */
+.trinetra-modal-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    border-bottom: 2px solid rgba(255,255,255,0.1);
-    padding-bottom: 15px;
-    margin-bottom: 25px;
-    position: relative;
-    z-index: 1;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: linear-gradient(180deg, rgba(107, 47, 160, 0.12) 0%, transparent 100%);
 }
 
-.trinetra-brand {
-    font-family: var(--font-head);
-    font-size: 16px;
-    font-weight: 900;
+.trinetra-modal-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.trinetra-modal-logo {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+}
+
+.trinetra-modal-title {
+    font-size: 15px;
+    font-weight: 800;
     letter-spacing: 3px;
-    color: #fff;
-    text-shadow: 0 0 10px rgba(255,255,255,0.5);
-}
-
-.trinetra-brand span {
-    color: var(--real-color);
+    background: linear-gradient(135deg, #FF6B00, #6B2FA0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .trinetra-latency {
-    font-family: var(--font-head);
-    font-size: 12px;
-    color: var(--real-color);
-    background: rgba(0, 243, 255, 0.1);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--tri-text-muted);
+    background: rgba(107, 47, 160, 0.15);
     padding: 4px 10px;
-    border: 1px solid rgba(0, 243, 255, 0.3);
+    border-radius: 6px;
+    border: 1px solid rgba(107, 47, 160, 0.2);
 }
 
-.trinetra-verdict-main {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 30px 20px;
-    background: rgba(0,0,0,0.4);
-    border: 1px solid rgba(255,255,255,0.05);
-    margin-bottom: 25px;
-    position: relative;
-    z-index: 1;
-    overflow: hidden;
-}
-
-/* Dynamic glow based on status */
-.trinetra-verdict-main.status-fake {
-    border-color: var(--fake-color);
-    box-shadow: inset 0 0 30px rgba(255, 0, 60, 0.15);
-}
-.trinetra-verdict-main.status-real {
-    border-color: var(--real-color);
-    box-shadow: inset 0 0 30px rgba(0, 243, 255, 0.15);
-}
-
-.trinetra-verdict-label {
-    font-family: var(--font-head);
-    font-size: 42px;
-    font-weight: 900;
-    letter-spacing: 4px;
-    margin-bottom: 5px;
-    text-transform: uppercase;
-}
-
-.status-fake .trinetra-verdict-label {
-    color: var(--fake-color);
-    text-shadow: 0 0 20px rgba(255,0,60,0.6);
-}
-.status-real .trinetra-verdict-label {
-    color: var(--real-color);
-    text-shadow: 0 0 20px rgba(0,243,255,0.6);
-}
-
-.trinetra-verdict-sub {
-    font-family: var(--font-head);
-    font-size: 10px;
-    color: #fff;
-    letter-spacing: 2px;
-    opacity: 0.6;
-}
-
-.trinetra-results-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-bottom: 25px;
-    position: relative;
-    z-index: 1;
-}
-
-.trinetra-result-cell {
-    background: rgba(0,0,0,0.3);
-    border: 1px solid rgba(255,255,255,0.05);
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    border-left: 3px solid rgba(255,255,255,0.2);
-}
-
-.trinetra-label {
-    font-family: var(--font-head);
-    font-size: 10px;
-    color: var(--text-muted);
-    letter-spacing: 1px;
-    margin-bottom: 8px;
-}
-
-.trinetra-value {
-    font-size: 18px;
-    font-weight: 700;
-    color: #fff;
-}
-
-.trinetra-value.fake-text { color: var(--fake-color); }
-.trinetra-value.real-text { color: var(--real-color); }
-.trinetra-value.muted { color: #555; font-style: italic; }
-
-.trinetra-summary {
-    font-size: 16px;
-    line-height: 1.5;
-    color: var(--text-main);
-    background: rgba(0,0,0,0.5);
-    padding: 20px;
-    border: 1px dashed rgba(255,255,255,0.2);
-    position: relative;
-    z-index: 1;
-    margin-bottom: 20px;
-}
-
-.trinetra-footer {
-    font-family: var(--font-head);
-    font-size: 10px;
-    color: var(--text-muted);
-    text-align: right;
-    letter-spacing: 1px;
-    opacity: 0.5;
-    position: relative;
-    z-index: 1;
-}
-
+/* ── Close Button ── */
 .trinetra-close {
     position: absolute;
-    top: 25px;
-    right: 25px;
-    font-family: var(--font-head);
-    font-size: 20px;
-    color: rgba(255,255,255,0.5);
+    top: 18px;
+    right: 18px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 14px;
+    color: var(--tri-text-muted);
     cursor: pointer;
     z-index: 10;
     transition: all 0.2s;
+    border: 1px solid rgba(255,255,255,0.06);
 }
 
 .trinetra-close:hover {
     color: #fff;
-    transform: rotate(90deg);
+    background: rgba(255, 0, 60, 0.15);
+    border-color: rgba(255, 0, 60, 0.3);
+}
+
+/* ── Verdict Section ── */
+.trinetra-verdict-main {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 24px;
+    margin: 16px;
+    border-radius: 14px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.04);
+    position: relative;
+    overflow: hidden;
+}
+
+.trinetra-verdict-main::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+}
+
+.trinetra-verdict-main.status-fake {
+    border-color: rgba(255, 0, 60, 0.2);
+}
+
+.trinetra-verdict-main.status-fake::before {
+    background: linear-gradient(90deg, var(--tri-fake), transparent);
+}
+
+.trinetra-verdict-main.status-real {
+    border-color: rgba(0, 230, 118, 0.2);
+}
+
+.trinetra-verdict-main.status-real::before {
+    background: linear-gradient(90deg, var(--tri-real), transparent);
+}
+
+.trinetra-verdict-icon {
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+}
+
+.trinetra-verdict-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.trinetra-verdict-label {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+.status-fake .trinetra-verdict-label {
+    color: var(--tri-fake);
+}
+
+.status-real .trinetra-verdict-label {
+    color: var(--tri-real);
+}
+
+.trinetra-verdict-sub {
+    font-size: 10px;
+    color: var(--tri-text-muted);
+    letter-spacing: 1.5px;
+    font-weight: 600;
+}
+
+/* ── Results Grid ── */
+.trinetra-results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 0 16px 16px;
+}
+
+.trinetra-result-cell {
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.04);
+    padding: 14px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: border-color 0.2s;
+}
+
+.trinetra-result-cell:hover {
+    border-color: rgba(107, 47, 160, 0.2);
+}
+
+.trinetra-label {
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--tri-text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.trinetra-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.trinetra-value.fake-text { color: var(--tri-fake); }
+.trinetra-value.real-text { color: var(--tri-real); }
+.trinetra-value.muted { color: rgba(155, 138, 191, 0.5); font-style: italic; font-weight: 500; }
+
+/* ── Summary ── */
+.trinetra-summary {
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--tri-text);
+    background: rgba(0,0,0,0.2);
+    padding: 16px;
+    margin: 0 16px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.04);
+    font-weight: 400;
+}
+
+/* ── Footer ── */
+.trinetra-footer {
+    font-size: 10px;
+    color: var(--tri-text-muted);
+    text-align: center;
+    padding: 12px 16px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    letter-spacing: 1px;
+    font-weight: 500;
+    opacity: 0.6;
+    background: rgba(0,0,0,0.15);
 }

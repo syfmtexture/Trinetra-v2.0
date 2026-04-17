@@ -580,7 +580,7 @@ export default function GeneralPage() {
   // ═══════════════ LOGIN SCREEN ═══════════════
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 text-[var(--foreground)] relative overflow-hidden transition-colors duration-500">
+      <div suppressHydrationWarning className="min-h-screen flex items-center justify-center p-6 text-[var(--foreground)] relative overflow-hidden transition-colors duration-500">
         {/* ── 3D Animated Background Layer ── */}
         <NeuralNetworkBG darkMode={darkMode} />
 
@@ -650,7 +650,7 @@ export default function GeneralPage() {
 
   // ═══════════════ MAIN DASHBOARD ═══════════════
   return (
-    <div className={`min-h-screen flex flex-col pt-20 bg-[var(--background)] text-[var(--foreground)] transition-colors duration-300 relative overflow-hidden`}>
+    <div suppressHydrationWarning className={`min-h-screen flex flex-col pt-20 bg-[var(--background)] text-[var(--foreground)] transition-colors duration-300 relative overflow-hidden`}>
       {/* ── 3D Animated Background Layer ── */}
       <NeuralNetworkBG darkMode={darkMode} />
 
