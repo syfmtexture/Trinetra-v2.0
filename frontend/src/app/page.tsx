@@ -347,7 +347,7 @@ const NeuralNetworkBG = ({ darkMode }: { darkMode: boolean }) => {
   return <canvas ref={canvasRef} className={`fixed inset-0 pointer-events-none z-[0] opacity-60 ${darkMode ? 'mix-blend-screen' : ''}`} />;
 };
 
-export default function GeneralPage() {
+export function GeneralPage() {
   const [lang, setLang] = useState<Lang>('en');
   const [darkMode, setDarkMode] = useState(false);
   const [showSettings, setShowSettings] = useState(false);

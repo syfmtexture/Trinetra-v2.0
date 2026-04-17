@@ -51,9 +51,9 @@ else:
         from src.inference.infer import run_inference, InferenceResult
         from src.core.config import MODEL_DIR
         _ML_AVAILABLE = True
-        print("✅ ML model loaded successfully.")
+        print("[OK] ML model loaded successfully.")
     except Exception as _ml_err:
-        print(f"⚠️  ML model unavailable: {_ml_err}. Running in DEMO mode.")
+        print(f"[WARN] ML model unavailable: {_ml_err}. Running in DEMO mode.")
         MODEL_DIR = ""
         # Provide a stub InferenceResult for demo mode
         class InferenceResult:  # type: ignore
