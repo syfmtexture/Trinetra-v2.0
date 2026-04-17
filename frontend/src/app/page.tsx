@@ -1,46 +1,36 @@
 'use client';
 
-import React, { useState, useCallback, useEffect, useRef, Suspense } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, UploadCloud, ShieldCheck, ShieldAlert, Languages, LogOut, Info, ArrowRight, Lock, Loader2, CheckCircle2, XCircle, Wifi, WifiOff, Share2, LockKeyhole, Zap, ArrowLeft, Copy, MessageCircle, ExternalLink, Send, Download, Globe, AlertTriangle, CheckCircle, Mail, Settings, Sun, Moon, Bell, FileText, User, ChevronDown, BarChart2, Eye, MoreVertical, History } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Area, AreaChart } from 'recharts';
-import { Canvas } from '@react-three/fiber';
-import ThreeJSHeatmap from '@/components/three/ThreeJSHeatmap';
-import { analyzeMedia, checkHealth, subscribeToNewsletter, type AnalysisResponse } from '@/lib/api';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
-
-// --- Landing Page Components from main ---
+import { ThemeProvider } from '@/components/landing/ThemeContext';
 import Navbar from '@/components/landing/Navbar';
 import Hero from '@/components/landing/Hero';
-import Problem from '@/components/landing/Problem';
 import Features from '@/components/landing/Features';
 import HowItWorks from '@/components/landing/HowItWorks';
+import Problem from '@/components/landing/Problem';
 import UseCases from '@/components/landing/UseCases';
 import CTA from '@/components/landing/CTA';
 import Footer from '@/components/landing/Footer';
 import Cursor from '@/components/landing/Cursor';
-import MandalaScroll from '@/components/landing/MandalaScroll';
-import { ThemeProvider } from '@/components/landing/ThemeContext';
 
-function LandingPage() {
+export default function LandingPage() {
   return (
     <ThemeProvider>
       <div className="landing-theme">
         <Cursor />
         <Navbar />
-        <Hero />
-        <Problem />
-        <Features />
-        <HowItWorks />
-        <UseCases />
-        <CTA />
+        <main>
+          <Hero />
+          <Problem />
+          <Features />
+          <HowItWorks />
+          <UseCases />
+          <CTA />
+        </main>
         <Footer />
-        <MandalaScroll />
       </div>
     </ThemeProvider>
   );
 }
+
 
 
 // ─── Translations ───
@@ -1782,3 +1772,4 @@ export default function GeneralPage() {
     </div>
   );
 }
+
