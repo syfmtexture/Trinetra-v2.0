@@ -276,8 +276,13 @@ def _crop_face(
 ) -> tuple[np.ndarray | None, np.ndarray | None, float]:
     """Return (face_crop (H,W,3), landmarks (5,2), confidence) or (None, None, 0)."""
     pil = Image.fromarray(frame_rgb)
-    box, prob, landmarks = mtcnn.detect(pil, landmarks=True)
-    if box is None or prob[0] is None or prob[0] < 0.90:
+    try:
+        box, prob, landmarks = mtcnn.detect(pil, landmarks=True)
+    except Exception:
+        # MTCNN can raise ValueError / RuntimeError when no face proposals are
+        # generated (e.g. torch.cat on empty list). Treat as no-face-detected.
+        return None, None, 0.0
+    if box is None or prob is None or len(prob) == 0 or prob[0] is None or prob[0] < 0.90:
         return None, None, 0.0
     conf = float(prob[0])
     x1, y1, x2, y2 = [int(v) for v in box[0]]

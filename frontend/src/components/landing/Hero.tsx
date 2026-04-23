@@ -61,7 +61,7 @@ export default function Hero() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="text-lg md:text-xl text-trinetra-muted mb-10 max-w-2xl mx-auto font-medium"
           >
-            Trinetra combines EfficientNet-B4, LSTM, and Reality Defender to detect synthetic media, execute automated platform takedowns, and guide victims through digital lockdowns.
+            Trinetra combines EfficientNet-V2-S, LSTM, and Reality Defender to detect synthetic media, execute automated platform takedowns, and guide victims through digital lockdowns.
           </motion.p>
 
           <motion.div

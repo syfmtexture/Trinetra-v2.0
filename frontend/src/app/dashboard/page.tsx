@@ -4,12 +4,17 @@ import React, { useState, useCallback, useEffect } from 'react';
 import {
   FlameKindling, FileText, Sparkles, Lock, LogOut,
   Settings, Sun, Moon, Loader2, Languages, ChevronDown,
+  MapPin, Gavel, Globe, Shield,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { UploadZone } from '@/components/dashboard/UploadZone';
 import { ResultTab } from '@/components/dashboard/ResultTab';
 import { HeatmapTab } from '@/components/dashboard/HeatmapTab';
 import { SummaryTab } from '@/components/dashboard/SummaryTab';
+import { AlibiTab } from '@/components/dashboard/AlibiTab';
+import { TakedownTab } from '@/components/dashboard/TakedownTab';
+import { BlastRadiusTab } from '@/components/dashboard/BlastRadiusTab';
+import { CrisisTab } from '@/components/dashboard/CrisisTab';
 import {
   SettingsPanel,
   LANGUAGE_OPTIONS,
@@ -25,6 +30,15 @@ const TABS: { id: TabId; label: string; Icon: React.ElementType }[] = [
   { id: 'result',  label: 'Result',  Icon: Sparkles },
   { id: 'heatmap', label: 'Heatmap', Icon: FlameKindling },
   { id: 'summary', label: 'Summary', Icon: FileText },
+];
+
+// ─── Victim Response tabs (FAKE only) ───────────────────────────
+type VictimTabId = 'alibi' | 'takedown' | 'blast-radius' | 'crisis';
+const VICTIM_TABS: { id: VictimTabId; label: string; Icon: React.ElementType; color: string }[] = [
+  { id: 'alibi',        label: 'Digital Alibi',  Icon: MapPin, color: 'from-blue-500 to-indigo-600' },
+  { id: 'takedown',     label: 'Takedown',       Icon: Gavel,  color: 'from-red-500 to-rose-600' },
+  { id: 'blast-radius', label: 'Blast Radius',   Icon: Globe,  color: 'from-amber-500 to-red-600' },
+  { id: 'crisis',       label: 'Crisis Support', Icon: Shield, color: 'from-pink-500 to-purple-600' },
 ];
 
 // ─── Login Screen ───────────────────────────────────────────────
@@ -138,6 +152,8 @@ export default function DashboardPage() {
   const [tab, setTab]                       = useState<TabId>('result');
   const [backendOnline, setBackendOnline]   = useState<boolean | null>(null);
   const [history, setHistory]               = useState<HistoryItem[]>([]);
+  const [victimTab, setVictimTab]           = useState<VictimTabId>('alibi');
+  const [panicMode, setPanicMode]           = useState(false);
 
   const t = TRANSLATIONS[lang] || TRANSLATIONS['en'];
   const currentLang = LANGUAGE_OPTIONS.find((o) => o.code === lang);
@@ -207,7 +223,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={`min-h-screen bg-background ${panicMode ? 'panic-blur' : ''}`}>
       {/* ── Header ── */}
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border">
         <div className="container flex items-center justify-between h-16">
@@ -317,7 +333,7 @@ export default function DashboardPage() {
         <div className="grid lg:grid-cols-[400px_1fr] gap-6">
 
           {/* Left: upload (sticky) */}
-          <div className="lg:sticky lg:top-24 lg:self-start">
+          <div className="lg:self-start">
             <UploadZone
               preview={preview}
               fileName={file?.name ?? null}
@@ -375,6 +391,58 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+
+          {/* ── Victim Response Toolkit (FAKE verdict only) ── */}
+          {result && result.primary_verdict === 'FAKE' && (
+            <div className="lg:col-span-2 mt-4">
+              {/* Section header */}
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-red-500 to-brand-orange flex items-center justify-center shadow-glow">
+                  <Shield className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h2 className="font-display text-2xl md:text-3xl font-bold tracking-tighter">
+                    Victim Response <span className="text-gradient-brand">Toolkit</span>
+                  </h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">Fight back — prove your truth, take it down, track the spread, get support</p>
+                </div>
+              </div>
+
+              {/* Victim tab bar */}
+              <div className="w-full grid grid-cols-4 h-12 rounded-2xl bg-muted/60 p-1 mb-6">
+                {VICTIM_TABS.map(({ id, label, Icon, color }) => (
+                  <button
+                    key={id}
+                    onClick={() => setVictimTab(id)}
+                    className={`rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all ${
+                      victimTab === id
+                        ? 'bg-background shadow-soft text-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="hidden sm:inline">{label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Victim tab content */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={victimTab}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {victimTab === 'alibi'        && <AlibiTab />}
+                  {victimTab === 'takedown'     && <TakedownTab result={result} />}
+                  {victimTab === 'blast-radius' && <BlastRadiusTab />}
+                  {victimTab === 'crisis'       && <CrisisTab onPanic={setPanicMode} />}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       </main>
 

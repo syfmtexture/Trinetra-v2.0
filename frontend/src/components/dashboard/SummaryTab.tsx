@@ -47,7 +47,7 @@ export const SummaryTab = ({ result, fileName }: SummaryTabProps) => {
       latency_ms: result.latency_ms,
       forensic_summary: result.forensic_summary,
       analyzedAt: new Date().toISOString(),
-      model: 'EfficientNet-B4 + Reality Defender',
+      model: 'EfficientNet-V2-S',
     };
     const blob = new Blob([JSON.stringify(report, null, 2)], {
       type: 'application/json',
@@ -162,7 +162,7 @@ export const SummaryTab = ({ result, fileName }: SummaryTabProps) => {
         <dl className="grid sm:grid-cols-2 gap-x-8 gap-y-3 text-sm">
           {[
             ['File', fileName],
-            ['Model', 'EfficientNet-B4 + BiLSTM'],
+            ['Model', 'EfficientNet-V2-S'],
             ['Resolution', '—'],
             ['Latency', `${result.latency_ms.toFixed(2)} ms`],
             ['Backend', 'FastAPI · PyTorch'],

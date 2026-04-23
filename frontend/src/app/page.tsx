@@ -526,7 +526,7 @@ export function GeneralPage() {
       doc.text('Detection Methodology:', 15, whyY);
       doc.setFont('helvetica', 'normal');
       const whyText = result.primary_verdict === 'FAKE'
-        ? `Model detected ${result.confidence_score.toFixed(1)}% manipulation probability. Spatial artifacts identified by EfficientNet-B4 + Grad-CAM, combined with LSTM temporal inconsistencies across frames.`
+        ? `Model detected ${result.confidence_score.toFixed(1)}% manipulation probability. Spatial artifacts identified by EfficientNet-V2-S + Grad-CAM, combined with LSTM temporal inconsistencies across frames.`
         : `Model confirmed ${result.confidence_score.toFixed(1)}% status. No significant spatial or temporal anomalies detected. Media appears authentic.`;
       doc.text(doc.splitTextToSize(whyText, 180), 15, whyY + 7);
       
@@ -1090,7 +1090,7 @@ export function GeneralPage() {
                         </div>
                         <div className="p-4 rounded-xl bg-[var(--surface-2)] border border-[var(--border-strong)]">
                           <span className="text-xs font-bold text-[var(--muted)] uppercase tracking-wider block mb-1">Architecture</span>
-                          <span className="font-bold text-sm font-mono text-[var(--foreground)]">EfficientNet-B4 + BiLSTM</span>
+                          <span className="font-bold text-sm font-mono text-[var(--foreground)]">EfficientNet-V2-S</span>
                         </div>
                       </div>
                       <div className="p-4 rounded-xl bg-[var(--surface-2)] border border-[var(--border-strong)]">
@@ -1152,7 +1152,7 @@ export function GeneralPage() {
                       <>
                         <p className="font-bold text-[#40C057] mb-2">✅ VERIFIED AUTHENTIC: A media clip featuring me has been independently verified as REAL by AI forensic analysis.</p>
                         <p className="mb-2">I have run this through Trinetra&apos;s forensic AI, which confirmed it is {result.confidence_score.toFixed(1)}% authentic — not AI-generated or manipulated.</p>
-                        <p>This is certified by EfficientNet-B4 + Reality Defender cloud analysis. Please disregard any claims that this content is fake.</p>
+                        <p>This is certified by EfficientNet-V2-S cloud analysis. Please disregard any claims that this content is fake.</p>
                       </>
                     )}
                   </div>
@@ -1160,7 +1160,7 @@ export function GeneralPage() {
                     <button onClick={() => {
                       const msg = isFake
                         ? `URGENT: A video/image currently circulating featuring me is a CONFIRMED DEEPFAKE.\n\nI have run this media through Trinetra's military-grade forensic analysis, which has verified it as ${result.confidence_score.toFixed(1)}% synthetically manipulated.\n\nPlease DO NOT share, forward, or engage with this content.`
-                        : `✅ VERIFIED AUTHENTIC: A media clip featuring me has been confirmed as REAL by Trinetra forensic AI (${result.confidence_score.toFixed(1)}% authentic).\n\nThis has been certified by EfficientNet-B4 + Reality Defender cloud analysis. It is NOT AI-generated or manipulated.`;
+                        : `✅ VERIFIED AUTHENTIC: A media clip featuring me has been confirmed as REAL by Trinetra forensic AI (${result.confidence_score.toFixed(1)}% authentic).\n\nThis has been certified by EfficientNet-V2-S cloud analysis. It is NOT AI-generated or manipulated.`;
                       navigator.clipboard.writeText(msg);
                     }} className="flex-1 flex items-center justify-center space-x-2 py-2.5 rounded-xl bg-[#212529] text-white text-sm font-bold hover:bg-black transition-colors">
                       <Copy className="w-4 h-4" /><span>Copy</span>
@@ -1193,7 +1193,7 @@ export function GeneralPage() {
                         <p className="font-bold text-[#4C6EF5] mb-1">Subject: URGENT — Deepfake Alert: Media Circulating About Me</p>
                         <p className="mb-2">Dear Recipient,</p>
                         <p className="mb-2">I am writing to inform you that a video/image circulating online featuring me has been <strong>confirmed as a DEEPFAKE</strong> by Trinetra forensic AI.</p>
-                        <p className="mb-2">Confidence: <strong>{result.confidence_score.toFixed(1)}%</strong> synthetic · Engine: EfficientNet-B4 + RD</p>
+                        <p className="mb-2">Confidence: <strong>{result.confidence_score.toFixed(1)}%</strong> synthetic · Engine: EfficientNet-V2-S</p>
                         <p>Please do NOT share this content. Under IT Act 2000, distributing synthetic media non-consensually is punishable by law.</p>
                       </>
                     ) : (
@@ -1201,7 +1201,7 @@ export function GeneralPage() {
                         <p className="font-bold text-[#40C057] mb-1">Subject: ✅ Verified Authentic — Trinetra Forensic Clearance</p>
                         <p className="mb-2">Dear Recipient,</p>
                         <p className="mb-2">I am writing to confirm that a media clip featuring me has been <strong>independently verified as REAL</strong> by Trinetra forensic AI.</p>
-                        <p className="mb-2">Authenticity: <strong>{result.confidence_score.toFixed(1)}%</strong> genuine · Engine: EfficientNet-B4 + RD</p>
+                        <p className="mb-2">Authenticity: <strong>{result.confidence_score.toFixed(1)}%</strong> genuine · Engine: EfficientNet-V2-S</p>
                         <p>Please disregard any claims that this content is AI-generated or manipulated. This certificate serves as forensic proof of authenticity.</p>
                       </>
                     )}
@@ -1252,8 +1252,8 @@ export function GeneralPage() {
                           ? encodeURIComponent('URGENT — Deepfake Alert [Trinetra Forensic Verification]')
                           : encodeURIComponent('✅ Verified Authentic — Trinetra Forensic Clearance Certificate');
                         const body = isFake
-                          ? encodeURIComponent(`Dear Recipient,\n\nI am writing to inform you that a video/image circulating online featuring me has been CONFIRMED as a DEEPFAKE by Trinetra forensic AI analysis.\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔴 VERDICT: ${result.primary_verdict}\n📊 Confidence: ${result.confidence_score.toFixed(1)}% synthetic manipulation\n🔬 Detection Engine: EfficientNet-B4 + Reality Defender\n⏱️ Analysis Latency: ${result.latency_ms.toFixed(0)}ms\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nForensic Summary:\n${result.forensic_summary}\n\n⚠️ ATTACHMENT: Please find the forensic evidence image attached (auto-downloaded to your device).\n\nPlease do NOT share, forward, or engage with this synthetic content. Under the IT Act 2000 and IT (Intermediary Guidelines) Rules 2021, distributing non-consensual synthetic media is a punishable offense.\n\nVerified by Trinetra V2 — AI Deepfake Detection Platform\nGenerated: ${new Date().toLocaleString()}`)
-                          : encodeURIComponent(`Dear Recipient,\n\nI am writing to confirm that a media clip featuring me has been INDEPENDENTLY VERIFIED as REAL and AUTHENTIC by Trinetra forensic AI analysis.\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n✅ VERDICT: ${result.primary_verdict}\n📊 Authenticity: ${result.confidence_score.toFixed(1)}% genuine (not AI-generated)\n🔬 Detection Engine: EfficientNet-B4 + Reality Defender\n⏱️ Analysis Latency: ${result.latency_ms.toFixed(0)}ms\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nForensic Summary:\n${result.forensic_summary}\n\n📎 ATTACHMENT: A copy of the forensic evidence has been auto-downloaded to the sender's device and can be shared upon request.\n\nPlease disregard any claims that this content is fake or AI-generated. This email serves as a forensic clearance certificate.\n\nVerified by Trinetra V2 — AI Deepfake Detection Platform\nGenerated: ${new Date().toLocaleString()}`);
+                          ? encodeURIComponent(`Dear Recipient,\n\nI am writing to inform you that a video/image circulating online featuring me has been CONFIRMED as a DEEPFAKE by Trinetra forensic AI analysis.\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🔴 VERDICT: ${result.primary_verdict}\n📊 Confidence: ${result.confidence_score.toFixed(1)}% synthetic manipulation\n🔬 Detection Engine: EfficientNet-V2-S\n⏱️ Analysis Latency: ${result.latency_ms.toFixed(0)}ms\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nForensic Summary:\n${result.forensic_summary}\n\n⚠️ ATTACHMENT: Please find the forensic evidence image attached (auto-downloaded to your device).\n\nPlease do NOT share, forward, or engage with this synthetic content. Under the IT Act 2000 and IT (Intermediary Guidelines) Rules 2021, distributing non-consensual synthetic media is a punishable offense.\n\nVerified by Trinetra V2 — AI Deepfake Detection Platform\nGenerated: ${new Date().toLocaleString()}`)
+                          : encodeURIComponent(`Dear Recipient,\n\nI am writing to confirm that a media clip featuring me has been INDEPENDENTLY VERIFIED as REAL and AUTHENTIC by Trinetra forensic AI analysis.\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n✅ VERDICT: ${result.primary_verdict}\n📊 Authenticity: ${result.confidence_score.toFixed(1)}% genuine (not AI-generated)\n🔬 Detection Engine: EfficientNet-V2-S\n⏱️ Analysis Latency: ${result.latency_ms.toFixed(0)}ms\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nForensic Summary:\n${result.forensic_summary}\n\n📎 ATTACHMENT: A copy of the forensic evidence has been auto-downloaded to the sender's device and can be shared upon request.\n\nPlease disregard any claims that this content is fake or AI-generated. This email serves as a forensic clearance certificate.\n\nVerified by Trinetra V2 — AI Deepfake Detection Platform\nGenerated: ${new Date().toLocaleString()}`);
                         window.open(`mailto:${encodeURIComponent(emailTo)}?subject=${subject}&body=${body}`, '_blank');
                       }, 600);
                     }}
@@ -1275,7 +1275,7 @@ export function GeneralPage() {
                     <p className={`text-xl font-bold font-['Syncopate'] mb-4 ${isFake ? 'text-[#FA5252]' : 'text-[#40C057]'}`}>{isFake ? 'CONFIRMED SYNTHETIC' : 'VERIFIED AUTHENTIC'}</p>
                     <div className="space-y-3 text-sm">
                       <div className="flex justify-between"><span className="text-[var(--muted)]">Confidence Score</span><span className={`font-bold font-mono ${isFake ? 'text-[#FA5252]' : 'text-[#40C057]'}`}>{result.confidence_score.toFixed(1)}%</span></div>
-                      <div className="flex justify-between"><span className="text-[var(--muted)]">Detection Engine</span><span className="font-bold font-mono text-[var(--foreground)]">EfficientNet-B4 + RD</span></div>
+                      <div className="flex justify-between"><span className="text-[var(--muted)]">Detection Engine</span><span className="font-bold font-mono text-[var(--foreground)]">EfficientNet-V2-S</span></div>
                       <div className="flex justify-between"><span className="text-[var(--muted)]">Latency</span><span className="font-bold font-mono text-[var(--foreground)]">{result.latency_ms.toFixed(0)}ms</span></div>
                     </div>
                     <div className="mt-4 p-3 bg-[#FF6B00]/10 border border-[#FF6B00]/20 rounded-lg text-xs text-[var(--foreground)] italic">&ldquo;{result.forensic_summary}&rdquo;</div>
@@ -1443,7 +1443,7 @@ export function GeneralPage() {
                           confidence_score: result.confidence_score,
                           evidence_summary: result.forensic_summary,
                           reporter_contact: "[your email]",
-                          detection_engine: "Trinetra V2 — EfficientNet-B4 + RD",
+                          detection_engine: "Trinetra V2 — EfficientNet-V2-S",
                         }, null, 2)}</pre>
                       </div>
                       <button

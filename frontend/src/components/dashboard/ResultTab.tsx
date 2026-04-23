@@ -117,7 +117,7 @@ export const ResultTab = ({ result }: { result: AnalysisResponse }) => {
       <div className="grid sm:grid-cols-3 gap-4">
         {[
           { k: 'Latency', v: `${result.latency_ms.toFixed(0)} ms` },
-          { k: 'Model', v: 'EfficientNet-B4 + RD' },
+          { k: 'Model', v: 'EfficientNet-V2-S' },
           { k: 'RD Status', v: result.rd_status || 'DISABLED' },
         ].map((stat) => (
           <div

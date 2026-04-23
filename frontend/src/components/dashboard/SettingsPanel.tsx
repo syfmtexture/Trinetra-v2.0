@@ -351,7 +351,7 @@ export function SettingsPanel({
                 <SectionTitle icon={Shield} label="About" />
                 <div className="rounded-2xl border border-border bg-muted/20 px-4 py-4 space-y-2 text-xs font-mono text-muted-foreground">
                   <div className="flex justify-between"><span>Version</span><span>v2.0.0</span></div>
-                  <div className="flex justify-between"><span>Model</span><span>EfficientNet-B4 + RD</span></div>
+                  <div className="flex justify-between"><span>Model</span><span>EfficientNet-V2-S</span></div>
                   <div className="flex justify-between"><span>Backend</span><span>FastAPI · PyTorch</span></div>
                 </div>
               </section>

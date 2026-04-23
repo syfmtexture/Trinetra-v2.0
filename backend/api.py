@@ -212,9 +212,14 @@ async def analyze_image(request: AnalysisRequest):
             gradcam_base64=grad_b64
         )
         
+    except HTTPException:
+        # Re-raise FastAPI HTTP exceptions directly (don't double-wrap)
+        raise
     except Exception as e:
-        print(f"API Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        traceback.print_exc()
+        print(f"[API Error] Unexpected: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal error: {e}")
 
 class SubscriptionRequest(BaseModel):
     email: str
@@ -228,7 +233,7 @@ async def subscribe(request: SubscriptionRequest):
 
 @app.get("/health")
 async def health_check():
-    return {"status": "online", "model": "EfficientNet-V2-S + Transformer"}
+    return {"status": "online", "model": "EfficientNet-V2-S"}
 
 if __name__ == "__main__":
     import uvicorn # type: ignore

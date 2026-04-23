@@ -33,7 +33,7 @@ export const useTrinetraStore = create<TrinetraState>((set) => ({
   uploadedPreviewUrl: null,
   
   backendOnline: false,
-  modelName: 'EfficientNet-B4 + LSTM',
+  modelName: 'EfficientNet-V2-S',
   systemDevice: 'Detecting',
   
   result: null,

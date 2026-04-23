@@ -8,7 +8,7 @@ export default function Features() {
     {
       icon: <Search className="w-6 h-6 text-trinetra-text" />,
       title: "Hybrid Detection Model",
-      description: "Combines local EfficientNet-B4 + LSTM with cloud-based Reality Defender APIs for unmatched accuracy in detecting synthetic media."
+      description: "Combines local EfficientNet-V2-S with cloud-based Reality Defender APIs for unmatched accuracy in detecting synthetic media."
     },
     {
       icon: <FileWarning className="w-6 h-6 text-trinetra-text" />,

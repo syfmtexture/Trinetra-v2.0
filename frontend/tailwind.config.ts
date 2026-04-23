@@ -53,6 +53,8 @@ const config: Config = {
           purple: "hsl(var(--brand-purple))",
           yellow: "hsl(var(--brand-yellow))",
           navy:   "hsl(var(--brand-navy))",
+          red:    "hsl(0 84% 58%)",
+          green:  "hsl(152 69% 40%)",
         },
       },
       borderRadius: {
@@ -82,6 +84,8 @@ const config: Config = {
         "fade-in":     "fade-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both",
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up":   "accordion-up 0.2s ease-out",
+        breathe:           "breathe 8s ease-in-out infinite",
+        "scan-pulse":      "scan-pulse 2s ease-in-out infinite",
       },
       keyframes: {
         float:        { "0%, 100%": { transform: "translateY(0)" }, "50%": { transform: "translateY(-10px)" } },
@@ -92,6 +96,8 @@ const config: Config = {
         "fade-in":    { from: { opacity: "0" }, to: { opacity: "1" } },
         "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },
         "accordion-up":   { from: { height: "var(--radix-accordion-content-height)" }, to: { height: "0" } },
+        breathe:           { "0%, 100%": { transform: "scale(0.8)", opacity: "0.3" }, "50%": { transform: "scale(1.3)", opacity: "0.6" } },
+        "scan-pulse":      { "0%": { transform: "translateY(-100%)", opacity: "0.8" }, "50%": { opacity: "1" }, "100%": { transform: "translateY(100%)", opacity: "0.8" } },
       },
     },
   },

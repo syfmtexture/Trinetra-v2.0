@@ -59,7 +59,7 @@ export function SystemStatusBar() {
           <div className="flex items-center gap-2 group cursor-help">
             <span className="text-xs font-mono font-bold">{modelName}</span>
             <div className="opacity-0 group-hover:opacity-100 absolute top-full right-0 mt-2 p-2 glass-panel text-[9px] w-48 transition-all pointer-events-none">
-              Hybrid CNN (EfficientNet-B4) + Temporal LSTM (Spatio-temporal analysis). 5 frozen blocks.
+              Hybrid CNN (EfficientNet-V2-S) + Temporal LSTM (Spatio-temporal analysis). 5 frozen blocks.
             </div>
           </div>
         </div>
