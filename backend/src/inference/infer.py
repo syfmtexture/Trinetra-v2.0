@@ -32,6 +32,7 @@ from src.core.config import (
     IMG_SIZE,
     SEQ_LEN,
     VIDEO_EXTENSIONS,
+    AUDIO_EXTENSIONS,
 )
 from src.models.model import DeepfakeDetector
 from src.inference.xai import (
@@ -324,8 +325,38 @@ def run_inference(
     ext = os.path.splitext(file_path)[1].lower()
     is_image = ext in IMAGE_EXTENSIONS
     is_video = ext in VIDEO_EXTENSIONS
-    if not is_image and not is_video:
+    is_audio = ext in AUDIO_EXTENSIONS
+
+    if not is_image and not is_video and not is_audio:
         raise ValueError(f"Unsupported file extension: {ext}")
+
+    if is_audio:
+        # Skip local visual analysis for audio
+        fake_prob = 0.0
+        label = "AUDIO"
+        rd_result_dict = None
+        from src.core.config import RD_ENABLED
+        if RD_ENABLED:
+            try:
+                from src.inference.reality_defender import analyze_with_rd
+                rd_res = analyze_with_rd(file_path)
+                rd_result_dict = {
+                    "status": rd_res.status,
+                    "score": round(rd_res.overall_score, 4),
+                    "models": rd_res.models,
+                    "request_id": rd_res.request_id,
+                    "latency_ms": round(rd_res.latency_ms, 2),
+                    "error": rd_res.error
+                }
+            except Exception as e:
+                rd_result_dict = {"status": "ERROR", "error": f"Integration error: {e}"}
+        
+        return InferenceResult(
+            fake_probability=0.0,
+            label="AUDIO",
+            rd_result=rd_result_dict,
+            forensic_log={"media_type": "audio", "reality_defender": rd_result_dict}
+        )
 
     # ── Load model (cached) ──
     if "model" not in _model_cache or _model_cache.get("ckpt") != checkpoint_path:

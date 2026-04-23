@@ -56,6 +56,17 @@ const config: Config = {
           red:    "hsl(0 84% 58%)",
           green:  "hsl(152 69% 40%)",
         },
+        trinetra: {
+          orange: "hsl(var(--brand-orange))",
+          purple: "hsl(var(--brand-purple))",
+          yellow: "hsl(var(--brand-yellow))",
+          navy:   "hsl(var(--brand-navy))",
+          text:   "hsl(var(--foreground))",
+          muted:  "hsl(var(--muted-foreground))",
+          bg:     "hsl(var(--background))",
+          surface:"hsl(var(--card))",
+          border: "hsl(var(--border))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -63,8 +74,8 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       fontFamily: {
-        sans:    ["Inter", "system-ui", "sans-serif"],
-        display: ["Space Grotesk", "system-ui", "sans-serif"],
+        sans:    ["var(--font-inter)", "system-ui", "sans-serif"],
+        display: ["var(--font-space-grotesk)", "system-ui", "sans-serif"],
       },
       backgroundImage: {
         "gradient-brand": "linear-gradient(135deg, hsl(var(--brand-purple)) 0%, hsl(var(--brand-orange)) 55%, hsl(var(--brand-yellow)) 100%)",

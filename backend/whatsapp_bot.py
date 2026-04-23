@@ -12,7 +12,8 @@ Run:  python -m whatsapp_bot          (from backend/ directory)
 import os
 import sys
 import logging
-
+import threading
+import time
 import httpx
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
@@ -45,6 +46,18 @@ app = Flask(__name__)
 # Deduplication: track processed message IDs to avoid duplicate responses
 _processed_messages: set[str] = set()
 _msg_lock = threading.Lock()
+
+
+def cleanup_processed_messages():
+    """Periodically clear the processed messages set to prevent memory leaks."""
+    while True:
+        time.sleep(3600)  # Cleanup every hour
+        with _msg_lock:
+            _processed_messages.clear()
+            logger.info("Cleared processed messages cache.")
+
+# Start cleanup thread
+threading.Thread(target=cleanup_processed_messages, daemon=True).start()
 
 
 # ─────────────────────────────────────────────
@@ -138,8 +151,87 @@ def verify_webhook():
 
     if mode == "subscribe" and token == VERIFY_TOKEN:
         logger.info("Webhook verified successfully!")
-        return challenge, 200
+        return challenge or "", 200
     return "Forbidden", 403
+
+
+def process_message_async(sender: str, msg_type: str, msg_data: dict, msg_id: str) -> None:
+    """Background task to handle heavy AI inference and reporting."""
+    try:
+        # Tell Meta we received it — stops retry deliveries
+        mark_as_read(msg_id)
+
+        if msg_type == "text":
+            text = msg_data.get("body", "").lower()
+            if "hi" in text or "hello" in text:
+                send_whatsapp_message(
+                    sender,
+                    "Welcome to Trinetra! 🔍\nSend me an image or video to check for deepfakes.",
+                )
+            else:
+                send_whatsapp_message(
+                    sender,
+                    "I'm ready. Please send a media file (Image/Video/Audio) for forensic analysis.",
+                )
+
+        elif msg_type in ["image", "video", "audio"]:
+            media_id = msg_data.get("id")
+            send_whatsapp_message(sender, f"⏳ Analyzing your {msg_type}... Please wait.")
+
+            # Download
+            file_path = download_media(media_id)
+            if not file_path:
+                send_whatsapp_message(sender, "Sorry, I couldn't download the file. Please try again.")
+                return
+
+            # ── Run Analysis (local + cloud) ──
+            result = run_inference(file_path)
+
+            # Build compact report
+            rd = result.rd_result
+            response_text = f"🔍 *Trinetra Report*\n"
+
+            if result.label == "AUDIO":
+                response_text += "🤖 Local AI: ℹ️ Audio (Cloud only)\n"
+            else:
+                local_icon = "🟢" if result.label == "REAL" else "🔴"
+                response_text += f"🤖 Local AI: {local_icon} {result.label} ({result.fake_probability * 100:.1f}%)\n"
+
+            # Cloud verdict (1 line)
+            if rd:
+                if rd.get("status") in ("ERROR", "SKIPPED"):
+                    response_text += f"☁️ Cloud: ⚠️ {rd.get('error', 'unavailable')}\n"
+                else:
+                    rd_status = rd.get("status")
+                    rd_icon = "🟢" if rd_status == "AUTHENTIC" else "🔴" if rd_status == "MANIPULATED" else "🟡"
+                    response_text += f"☁️ Cloud: {rd_icon} {rd_status} ({rd.get('score', 0) * 100:.1f}%)\n"
+
+                    # Only show top 3 most suspicious models
+                    models = rd.get("models", [])
+                    if models:
+                        sorted_models = sorted(models, key=lambda m: m.get("score", 0), reverse=True)
+                        top = sorted_models[:3]
+                        response_text += "📊 Top signals:\n"
+                        for m in top:
+                            name = m.get("model_name") or m.get("name") or m.get("model") or "model"
+                            score = m.get("score", 0)
+                            response_text += f"  • {name}: {score*100:.1f}%\n"
+
+            # AI Summary (compact)
+            ai_summary = generate_ai_summary(result)
+            if ai_summary:
+                response_text += f"\n🧠 *Summary*: {ai_summary}"
+
+            send_whatsapp_message(sender, response_text)
+
+            # Clean up downloaded file
+            try:
+                os.remove(file_path)
+            except OSError:
+                pass
+
+    except Exception as e:
+        logger.error(f"Error in background process: {e}", exc_info=True)
 
 
 @app.route("/webhook", methods=["POST"])
@@ -166,81 +258,17 @@ def handle_webhook():
                                 continue
                             _processed_messages.add(msg_id)
 
-                        # Tell Meta we received it — stops retry deliveries
-                        mark_as_read(msg_id)
-
-                        logger.info(f"New message from {sender} (type: {msg_type})")
-
-                        if msg_type == "text":
-                            text = msg.get("text", {}).get("body", "").lower()
-                            if "hi" in text or "hello" in text:
-                                send_whatsapp_message(
-                                    sender,
-                                    "Welcome to Trinetra! 🔍\nSend me an image or video to check for deepfakes.",
-                                )
-                            else:
-                                send_whatsapp_message(
-                                    sender,
-                                    "I'm ready. Please send a media file (Image/Video/Audio) for forensic analysis.",
-                                )
-
-                        elif msg_type in ["image", "video", "audio"]:
-                            media_data = msg.get(msg_type)
-                            media_id = media_data.get("id")
-
-                            send_whatsapp_message(sender, f"⏳ Analyzing your {msg_type}... Please wait.")
-
-                            # Download
-                            file_path = download_media(media_id)
-                            if not file_path:
-                                send_whatsapp_message(sender, "Sorry, I couldn't download the file. Please try again.")
-                                continue
-
-                            # ── Run Analysis (local + cloud) ──
-                            result = run_inference(file_path)
-
-                            # Build compact report
-                            local_icon = "🟢" if result.label == "REAL" else "🔴"
-                            rd = result.rd_result
-
-                            # Header + Local verdict (1 line)
-                            response_text = (
-                                f"🔍 *Trinetra Report*\n"
-                                f"🤖 Local: {local_icon} {result.label} ({result.fake_probability * 100:.1f}%)\n"
-                            )
-
-                            # Cloud verdict (1 line)
-                            if rd:
-                                if rd.get("status") in ("ERROR", "SKIPPED"):
-                                    response_text += f"☁️ Cloud: ⚠️ {rd.get('error', 'unavailable')}\n"
-                                else:
-                                    rd_status = rd.get("status")
-                                    rd_icon = "🟢" if rd_status == "AUTHENTIC" else "🔴" if rd_status == "MANIPULATED" else "🟡"
-                                    response_text += f"☁️ Cloud: {rd_icon} {rd_status} ({rd.get('score', 0) * 100:.1f}%)\n"
-
-                                    # Only show top 3 most suspicious models
-                                    models = rd.get("models", [])
-                                    if models:
-                                        sorted_models = sorted(models, key=lambda m: m.get("score", 0), reverse=True)
-                                        top = sorted_models[:3]
-                                        response_text += "📊 Top signals:\n"
-                                        for m in top:
-                                            name = m.get("model_name") or m.get("name") or m.get("model") or "model"
-                                            score = m.get("score", 0)
-                                            response_text += f"  • {name}: {score*100:.1f}%\n"
-
-                            # AI Summary (compact)
-                            ai_summary = generate_ai_summary(result)
-                            if ai_summary:
-                                response_text += f"\n🧠 *Summary*: {ai_summary}"
-
-                            send_whatsapp_message(sender, response_text)
-
-                            # Clean up downloaded file
-                            try:
-                                os.remove(file_path)
-                            except OSError:
-                                pass
+                        logger.info(f"Dispatching background task for {sender} (type: {msg_type})")
+                        
+                        # Extract data based on type
+                        msg_data = msg.get(msg_type, {}) if msg_type != "text" else msg.get("text", {})
+                        
+                        # Start background processing to avoid Meta webhook timeout (10s)
+                        thread = threading.Thread(
+                            target=process_message_async, 
+                            args=(sender, msg_type, msg_data, msg_id)
+                        )
+                        thread.start()
 
     except Exception as e:
         logger.error(f"Error handling webhook: {e}", exc_info=True)

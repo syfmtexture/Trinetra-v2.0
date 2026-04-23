@@ -1,5 +1,6 @@
 'use client';
 
+import React, { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react';
 import { ThemeProvider } from '@/components/landing/ThemeContext';
 import Navbar from '@/components/landing/Navbar';
 import Hero from '@/components/landing/Hero';
@@ -10,6 +11,26 @@ import UseCases from '@/components/landing/UseCases';
 import CTA from '@/components/landing/CTA';
 import Footer from '@/components/landing/Footer';
 import Cursor from '@/components/landing/Cursor';
+import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Loader2, Activity, FileText, CheckCircle2, XCircle, ShieldAlert, ShieldCheck, 
+  Eye, Share2, MoreVertical, LockKeyhole, Zap, ArrowLeft, AlertTriangle, 
+  CheckCircle, MessageCircle, Copy, Mail, Download, Globe, ExternalLink, 
+  Languages, ChevronDown, Sun, Moon, Settings, LogOut, User, History, 
+  Bell, ArrowRight, UploadCloud, Info, CheckCircle as CheckCircleIcon,
+  XCircle as XCircleIcon, AlertTriangle as AlertTriangleIcon,
+  Info as InfoIcon, Send, LucideIcon, Lock, Wifi, WifiOff
+} from 'lucide-react';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
+  ResponsiveContainer, ReferenceLine 
+} from 'recharts';
+import { Canvas } from '@react-three/fiber';
+import ThreeJSHeatmap from '@/components/three/ThreeJSHeatmap';
+import { analyzeMedia, checkHealth, subscribeToNewsletter, type AnalysisResponse } from '@/lib/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function LandingPage() {
   return (
@@ -347,7 +368,7 @@ const NeuralNetworkBG = ({ darkMode }: { darkMode: boolean }) => {
   return <canvas ref={canvasRef} className={`fixed inset-0 pointer-events-none z-[0] opacity-60 ${darkMode ? 'mix-blend-screen' : ''}`} />;
 };
 
-export function GeneralPage() {
+function GeneralPage() {
   const [lang, setLang] = useState<Lang>('en');
   const [darkMode, setDarkMode] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
