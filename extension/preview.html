@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trinetra Extension — Silk UI Preview</title>
+  <link rel="stylesheet" href="content.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0b;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    /* Remove fixed positioning for preview */
+    .trinetra-modal {
+      position: relative;
+      width: 100%;
+      height: auto;
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body>
+
+<div class="trinetra-modal" style="animation: none;">
+  <div class="trinetra-modal-content" style="animation-delay: 0s; transform: scale(1) translateY(0);">
+    <div class="trinetra-modal-inner">
+
+      <!-- HEADER -->
+      <div class="trinetra-header" style="animation-delay: 0s;">
+        <div class="trinetra-brand-group">
+          <span class="trinetra-brand">TRINETRA <span>// V2</span></span>
+          <span class="trinetra-hindi-sub">त्रिनेत्र — सत्य का तीसरा नेत्र</span>
+        </div>
+        <div class="trinetra-header-right">
+          <span class="trinetra-latency">142ms</span>
+          <div class="trinetra-close">✕</div>
+        </div>
+      </div>
+
+      <!-- CONFIDENCE GAUGE -->
+      <div class="trinetra-gauge-container" style="animation-delay: 0s;">
+        <svg class="trinetra-gauge-svg" viewBox="0 0 200 120">
+          <defs>
+            <filter id="trinetra-gauge-glow">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <path class="trinetra-gauge-track"
+                d="M 20 100 A 80 80 0 0 1 180 100" />
+          <path class="trinetra-gauge-fill"
+                d="M 20 100 A 80 80 0 0 1 180 100"
+                stroke="var(--fake-color)"
+                stroke-dasharray="251.33"
+                stroke-dashoffset="25.133"
+                filter="url(#trinetra-gauge-glow)" />
+          <text class="trinetra-gauge-value" x="100" y="78">90.0</text>
+          <text class="trinetra-gauge-unit" x="100" y="96">CONFIDENCE</text>
+        </svg>
+      </div>
+
+      <!-- VERDICT -->
+      <div class="trinetra-verdict-main status-fake" style="animation-delay: 0s;">
+        <div class="trinetra-yantra-tl"></div>
+        <div class="trinetra-yantra-tr"></div>
+        <div class="trinetra-yantra-bl"></div>
+        <div class="trinetra-yantra-br"></div>
+        <div class="trinetra-verdict-label">FAKE</div>
+        <div class="trinetra-verdict-sub">CONSOLIDATED FORENSIC VERDICT</div>
+        <div class="trinetra-verdict-hindi">संदिग्ध — छेड़छाड़ का संकेत</div>
+      </div>
+
+      <!-- FACE + GRADCAM -->
+      <div class="trinetra-visuals-row status-fake-parent" style="animation-delay: 0s;">
+        <div class="trinetra-visual-card">
+          <div class="trinetra-visual-card-label">Source Extraction</div>
+          <div class="trinetra-face-crop-wrap">
+            <div class="trinetra-no-face">No Face<br/>Detected</div>
+          </div>
+        </div>
+        <div class="trinetra-visual-card">
+          <div class="trinetra-visual-card-label">Grad-CAM Heatmap</div>
+          <div class="trinetra-no-gradcam">No heatmap<br/>available</div>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="trinetra-results-grid" style="animation-delay: 0s;">
+        <div class="trinetra-result-cell">
+          <span class="trinetra-label">LOCAL MODEL ⬥ HYBRID</span>
+          <span class="trinetra-value fake-text">FAKE (90.0%)</span>
+        </div>
+        <div class="trinetra-result-cell">
+          <span class="trinetra-label">RD CLOUD</span>
+          <span class="trinetra-value muted">DISABLED</span>
+        </div>
+      </div>
+
+      <!-- SUMMARY -->
+      <div class="trinetra-summary" style="animation-delay: 0s;">
+        Forensic analysis detected significant manipulation artifacts. The local EfficientNet-V2-S + Transformer hybrid model flagged anomalous spatial-temporal patterns consistent with AI-generated imagery. Confidence score exceeds threshold — treat as potentially manipulated evidence requiring further verification.
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="trinetra-actions" style="animation-delay: 0s;">
+        <button class="trinetra-btn" id="trinetra-copy-btn">
+          <span class="trinetra-btn-icon">📋</span> Copy Report
+        </button>
+        <button class="trinetra-btn" id="trinetra-history-btn">
+          <span class="trinetra-btn-icon">📜</span> History
+        </button>
+        <div class="trinetra-actions-spacer"></div>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="trinetra-footer" style="animation-delay: 0s;">
+        <div class="trinetra-footer-source">
+          <span class="trinetra-footer-source-dot offline"></span>
+          LOCAL ENGINE
+        </div>
+        <div class="trinetra-footer-esc">Esc to close</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -44,6 +44,7 @@ app = Flask(__name__)
 
 # Deduplication: track processed message IDs to avoid duplicate responses
 _processed_messages: set[str] = set()
+_msg_lock = threading.Lock()
 
 
 # ─────────────────────────────────────────────
@@ -71,6 +72,24 @@ def send_whatsapp_message(to: str, text: str) -> None:
         logger.info(f"Message sent to {to}")
     except Exception as e:
         logger.error(f"Error in send_whatsapp_message: {e}")
+
+
+def mark_as_read(message_id: str) -> None:
+    """Mark a message as read so Meta stops retrying delivery."""
+    url = f"https://graph.facebook.com/v18.0/{PHONE_ID}/messages"
+    headers = {
+        "Authorization": f"Bearer {ACCESS_TOKEN}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "messaging_product": "whatsapp",
+        "status": "read",
+        "message_id": message_id,
+    }
+    try:
+        httpx.post(url, json=payload, headers=headers)
+    except Exception as e:
+        logger.error(f"Failed to mark message as read: {e}")
 
 
 def download_media(media_id: str) -> str | None:
@@ -140,11 +159,15 @@ def handle_webhook():
                         sender = msg.get("from")
                         msg_type = msg.get("type")
 
-                        # Skip already-processed messages
-                        if msg_id in _processed_messages:
-                            logger.info(f"Skipping duplicate message {msg_id}")
-                            continue
-                        _processed_messages.add(msg_id)
+                        # Skip already-processed messages (thread-safe)
+                        with _msg_lock:
+                            if msg_id in _processed_messages:
+                                logger.info(f"Skipping duplicate message {msg_id}")
+                                continue
+                            _processed_messages.add(msg_id)
+
+                        # Tell Meta we received it — stops retry deliveries
+                        mark_as_read(msg_id)
 
                         logger.info(f"New message from {sender} (type: {msg_type})")
 

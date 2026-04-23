@@ -26,16 +26,16 @@ from PIL import Image
 # ──────────────────────────────────────────────
 
 def temporal_attention_rollout(
-    lstm_hidden_states: torch.Tensor,
-    fc_seq: torch.nn.Linear,
+    hidden_states: torch.Tensor,
+    classifier: torch.nn.Module,
 ) -> dict:
     """
-    Decode per-timestep manipulation confidence from LSTM hidden states.
+    Decode per-timestep manipulation confidence from temporal hidden states.
 
     Parameters
     ----------
-    lstm_hidden_states : (T, hidden_dim)  — squeezed from batch dim
-    fc_seq             : the model's sequence classification head (Linear → 1)
+    hidden_states : (T, feat_dim)  — squeezed from batch dim
+    classifier    : the model's classification head (e.g. Sequential → 1)
 
     Returns
     -------
@@ -45,8 +45,8 @@ def temporal_attention_rollout(
         shatter_delta        : float        — magnitude of the largest confidence jump
     """
     with torch.no_grad():
-        # fc_seq expects (N, hidden) → (N, 1)
-        logits = fc_seq(lstm_hidden_states)           # (T, 1)
+        # classifier expects (N, feat_dim) → (N, 1)
+        logits = classifier(hidden_states)            # (T, 1)
         probs = torch.sigmoid(logits).squeeze(-1)     # (T,)
         confidences = (probs * 100).cpu().tolist()     # percentages
 

@@ -37,17 +37,18 @@ RD_MAX_DOC_SIZE_MB = 5
 # ──────────────────────────────────────────────
 #  Preprocessing
 # ──────────────────────────────────────────────
-IMG_SIZE = 380                     # EfficientNet-B4 native resolution
-SEQ_LEN = 10                      # Frames sampled per video
+IMG_SIZE = 384                     # EfficientNet-V2-S native resolution
+SEQ_LEN = 20                      # Frames sampled per video
 VIDEO_EXTENSIONS = {".mp4", ".avi", ".mov", ".mkv"}
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp"}
 
 # ──────────────────────────────────────────────
 #  Model
 # ──────────────────────────────────────────────
-EFFICIENTNET_FEATURE_DIM = 1792   # EfficientNet-B4 output features
-LSTM_HIDDEN = 512
-LSTM_LAYERS = 1
+EFFICIENTNET_FEATURE_DIM = 1280   # EfficientNet-V2-S output features
+TRANSFORMER_HEADS = 8             # Multi-head attention heads
+TRANSFORMER_LAYERS = 4            # Number of transformer encoder layers
+TRANSFORMER_DIM_FF = 2048         # Feed-forward dimension
 FREEZE_BLOCKS = 5                 # Freeze first N EfficientNet blocks
 DROPOUT = 0.3
 

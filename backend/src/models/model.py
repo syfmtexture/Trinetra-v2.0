@@ -1,12 +1,12 @@
 """
-model.py — Hybrid EfficientNet-B4 + LSTM Deepfake Detector for Project Trinetra.
+model.py — Hybrid EfficientNet-V2-S + Transformer Deepfake Detector for Project Trinetra.
 
 Architecture
 ────────────
-1. Spatial backbone : EfficientNet-B4 (ImageNet pre-trained, lower blocks frozen)
-   → produces a 1792-d feature vector per frame.
-2. Temporal head    : LSTM that consumes the per-frame feature sequence.
-3. Adaptive routing : If the input has T == 1 (static image), the LSTM is
+1. Spatial backbone : EfficientNet-V2-S (ImageNet pre-trained, lower blocks frozen)
+   → produces a 1280-d feature vector per frame.
+2. Temporal head    : Transformer Encoder that consumes the per-frame feature sequence.
+3. Adaptive routing : If the input has T == 1 (static image), the Transformer is
    bypassed and the spatial features go straight to the classification head.
 """
 
@@ -18,8 +18,10 @@ from src.core.config import (
     DROPOUT,
     EFFICIENTNET_FEATURE_DIM,
     FREEZE_BLOCKS,
-    LSTM_HIDDEN,
-    LSTM_LAYERS,
+    SEQ_LEN,
+    TRANSFORMER_DIM_FF,
+    TRANSFORMER_HEADS,
+    TRANSFORMER_LAYERS,
 )
 
 
@@ -40,13 +42,13 @@ class DeepfakeDetector(nn.Module):
     def __init__(self):
         super().__init__()
 
-        # ── 1. Spatial feature extractor (EfficientNet-B4) ──
-        backbone = models.efficientnet_b4(weights=models.EfficientNet_B4_Weights.IMAGENET1K_V1)
+        # ── 1. Spatial feature extractor (EfficientNet-V2-S) ──
+        backbone = models.efficientnet_v2_s(weights=models.EfficientNet_V2_S_Weights.IMAGENET1K_V1)
 
         # Remove the original classifier head
         self.features = backbone.features         # Sequential of blocks
         self.pool = backbone.avgpool              # AdaptiveAvgPool2d
-        feature_dim = EFFICIENTNET_FEATURE_DIM    # 1792
+        feature_dim = EFFICIENTNET_FEATURE_DIM    # 1280
 
         # Freeze the lower blocks
         for i, block in enumerate(self.features):
@@ -54,21 +56,29 @@ class DeepfakeDetector(nn.Module):
                 for param in block.parameters():
                     param.requires_grad = False
 
-        # ── 2. Temporal sequence analyzer (LSTM) ──
-        self.lstm = nn.LSTM(
-            input_size=feature_dim,
-            hidden_size=LSTM_HIDDEN,
-            num_layers=LSTM_LAYERS,
+        # ── 2. Temporal sequence analyzer (Transformer Encoder) ──
+        self.pos_embedding = nn.Parameter(torch.randn(1, SEQ_LEN, feature_dim))
+
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=feature_dim,
+            nhead=TRANSFORMER_HEADS,
+            dim_feedforward=TRANSFORMER_DIM_FF,
+            dropout=DROPOUT,
             batch_first=True,
-            dropout=0.0 if LSTM_LAYERS == 1 else DROPOUT,
+        )
+        self.transformer = nn.TransformerEncoder(
+            encoder_layer,
+            num_layers=TRANSFORMER_LAYERS,
         )
 
-        # ── 3. Classification heads ──
-        #   One for sequence path (after LSTM), one for static path (direct)
-        self.dropout = nn.Dropout(DROPOUT)
-
-        self.fc_seq = nn.Linear(LSTM_HIDDEN, 1)
-        self.fc_static = nn.Linear(feature_dim, 1)
+        # ── 3. Classification head (shared for both paths) ──
+        self.classifier = nn.Sequential(
+            nn.Dropout(DROPOUT),
+            nn.Linear(feature_dim, 256),
+            nn.ReLU(),
+            nn.Dropout(DROPOUT),
+            nn.Linear(256, 1),
+        )
 
     # ──────────────────────────────────────────
 
@@ -89,8 +99,8 @@ class DeepfakeDetector(nn.Module):
         x : (B, T, C, H, W)
 
         Adaptive routing:
-          • T > 1  → spatial features → LSTM → fc_seq
-          • T == 1 → spatial features →        fc_static
+          • T > 1  → spatial features → Transformer → classifier
+          • T == 1 → spatial features →               classifier
         """
         B, T, C, H, W = x.shape
 
@@ -101,13 +111,15 @@ class DeepfakeDetector(nn.Module):
         if T > 1:
             # ── Sequence path ──
             features = features.reshape(B, T, -1)   # (B, T, feat_dim)
-            lstm_out, _ = self.lstm(features)        # (B, T, hidden)
-            last_hidden = lstm_out[:, -1, :]         # (B, hidden)
-            logits = self.fc_seq(self.dropout(last_hidden))  # (B, 1)
+            features = features + self.pos_embedding[:, :T, :]
+            transformer_out = self.transformer(features)  # (B, T, feat_dim)
+            # Use mean pooling over temporal dimension
+            pooled = transformer_out.mean(dim=1)     # (B, feat_dim)
+            logits = self.classifier(pooled)          # (B, 1)
         else:
-            # ── Static image path (bypass LSTM) ──
+            # ── Static image path (bypass Transformer) ──
             features = features.reshape(B, -1)       # (B, feat_dim)
-            logits = self.fc_static(self.dropout(features))  # (B, 1)
+            logits = self.classifier(features)        # (B, 1)
 
         return logits
 
@@ -115,13 +127,13 @@ class DeepfakeDetector(nn.Module):
 
     def forward_with_hidden(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor | None]:
         """
-        Same as forward() but additionally returns LSTM hidden states
-        for XAI temporal analysis.
+        Same as forward() but additionally returns per-frame transformer
+        hidden states for XAI temporal analysis.
 
         Returns
         -------
-        logits      : (B, 1)
-        lstm_states : (B, T, hidden) or None (if T == 1)
+        logits           : (B, 1)
+        temporal_states  : (B, T, feat_dim) or None (if T == 1)
         """
         B, T, C, H, W = x.shape
 
@@ -130,13 +142,14 @@ class DeepfakeDetector(nn.Module):
 
         if T > 1:
             features = features.reshape(B, T, -1)
-            lstm_out, _ = self.lstm(features)
-            last_hidden = lstm_out[:, -1, :]
-            logits = self.fc_seq(self.dropout(last_hidden))
-            return logits, lstm_out
+            features = features + self.pos_embedding[:, :T, :]
+            transformer_out = self.transformer(features)
+            pooled = transformer_out.mean(dim=1)
+            logits = self.classifier(pooled)
+            return logits, transformer_out
         else:
             features = features.reshape(B, -1)
-            logits = self.fc_static(self.dropout(features))
+            logits = self.classifier(features)
             return logits, None
 
 
@@ -145,7 +158,7 @@ class DeepfakeDetector(nn.Module):
 # ──────────────────────────────────────────────
 
 if __name__ == "__main__":
-    from config import DEVICE, IMG_SIZE, SEQ_LEN
+    from src.core.config import DEVICE, IMG_SIZE, SEQ_LEN
 
     model = DeepfakeDetector().to(DEVICE)
 
@@ -158,11 +171,11 @@ if __name__ == "__main__":
     # Sequence smoke test
     dummy_seq = torch.randn(2, SEQ_LEN, 3, IMG_SIZE, IMG_SIZE, device=DEVICE)
     out_seq = model(dummy_seq)
-    print(f"Sequence  input: {dummy_seq.shape} → output: {out_seq.shape}")
+    print(f"Sequence  input: {dummy_seq.shape} -> output: {out_seq.shape}")
 
     # Static smoke test
     dummy_static = torch.randn(2, 1, 3, IMG_SIZE, IMG_SIZE, device=DEVICE)
     out_static = model(dummy_static)
-    print(f"Static    input: {dummy_static.shape} → output: {out_static.shape}")
+    print(f"Static    input: {dummy_static.shape} -> output: {out_static.shape}")
 
-    print("✓ Model forward pass OK for both sequence and static inputs.")
+    print("[OK] Model forward pass OK for both sequence and static inputs.")
