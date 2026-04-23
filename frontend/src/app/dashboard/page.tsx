@@ -157,6 +157,11 @@ export default function DashboardPage() {
   const [victimTab, setVictimTab]           = useState<VictimTabId>('alibi');
   const [panicMode, setPanicMode]           = useState(false);
 
+  // Advanced scan state — lifted here so it survives tab switches
+  const [advancedAnalysis, setAdvancedAnalysis] = useState<string | null>(null);
+  const [advancedLoading, setAdvancedLoading]   = useState(false);
+  const [advancedError, setAdvancedError]       = useState<string | null>(null);
+
   const t = TRANSLATIONS[lang] || TRANSLATIONS['en'];
   const currentLang = LANGUAGE_OPTIONS.find((o) => o.code === lang);
 
@@ -178,6 +183,10 @@ export default function DashboardPage() {
     setResult(null);
     setError(null);
     setPreview(URL.createObjectURL(f));
+    // Reset advanced scan when a new file is uploaded
+    setAdvancedAnalysis(null);
+    setAdvancedLoading(false);
+    setAdvancedError(null);
   }, []);
 
   const handleClear = useCallback(() => {
@@ -388,7 +397,7 @@ export default function DashboardPage() {
                     {tab === 'result'  && <ResultTab result={result} />}
                     {tab === 'heatmap' && <HeatmapTab preview={preview!} result={result} />}
                     {tab === 'summary' && <SummaryTab result={result} fileName={file?.name ?? 'image'} />}
-                    {tab === 'advanced' && <AdvancedScanTab file={file!} />}
+                    {tab === 'advanced' && <AdvancedScanTab file={file!} analysis={advancedAnalysis} setAnalysis={setAdvancedAnalysis} isLoading={advancedLoading} setIsLoading={setAdvancedLoading} error={advancedError} setError={setAdvancedError} />}
                   </motion.div>
                 </AnimatePresence>
               </div>

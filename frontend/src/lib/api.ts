@@ -58,22 +58,38 @@ export function fileToBase64(file: File): Promise<string> {
 /**
  * Send a file for deepfake analysis.
  * Encodes the file as base64 and POSTs to the /analyze endpoint.
+ * Calls the backend directly (not through Next.js proxy) to avoid
+ * the proxy's default timeout which is too short for ML inference.
  */
 export async function analyzeMedia(file: File): Promise<AnalysisResponse> {
   const base64Data = await fileToBase64(file);
 
-  const res = await fetch(`${API_BASE}/analyze`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ base64_data: base64Data }),
-  });
+  // 120 second timeout — ML inference can take 30-50s
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 120_000);
 
-  if (!res.ok) {
-    const errorBody = await res.json().catch(() => ({ detail: 'Unknown error' }));
-    throw new Error(errorBody.detail || `Analysis failed: ${res.status}`);
+  try {
+    const res = await fetch('http://127.0.0.1:8000/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base64_data: base64Data }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => ({ detail: 'Unknown error' }));
+      throw new Error(errorBody.detail || `Analysis failed: ${res.status}`);
+    }
+
+    return res.json();
+  } catch (err: any) {
+    if (err.name === 'AbortError') {
+      throw new Error('Analysis timed out. The image may be too complex — try a smaller file.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  return res.json();
 }
 
 /**

@@ -6,7 +6,7 @@ from google import genai
 
 # User provided API keys
 API_KEYS = [
-    "-TwXGc"
+    "AIzaSyCbTNqZGLO5QxwfEgf-3l561ljt5RInm48","AIzaSyAUNz_4bzeO52JMEI_tiA__PVRYnPNf8QA","AIzaSyBC84TNeSv3Epzg-84ZJKPsbaqr67mq8l0"
 ]
 
 # Maximum image dimension — keeps payloads small & fast
@@ -111,28 +111,48 @@ Ask whether the image makes sense as a real moment:
 
 Look for signs common in both generation and editing:
 
-* Overly polished, hyper-aesthetic, too-perfect output
-* Global coherence but local failure
-* Faces that look plausible at first glance but collapse under inspection
-* Unnaturally even skin, hair, or clothing details
+* Global coherence but local structural failure (anatomy breaking down on zoom)
+* Faces that look plausible at first glance but collapse under close inspection
 * Identity-preserving edits that distort anatomy or materials
-* Region-specific realism with nearby mismatch
+* Region-specific realism with nearby mismatch (e.g. hyper-detailed face on a blurry body that was NOT caused by depth-of-field)
 * Subtle uncanny-valley behavior rather than obvious distortion
+* Text, logos, symbols, or writing that is garbled, misspelled, or structurally broken — this is one of the **strongest** AI tells
+
+#### 9. Real-world context awareness (CRITICAL)
+
+**Think like a human, not a robot.** Before flagging anything, ask yourself: "Would a real person looking at this photo actually find this suspicious, or is there an obvious real-world explanation?"
+
+You MUST consider these real-world scenarios that produce "AI-like" qualities in **real photos**:
+
+* **Cosplay and costume makeup:** Cosplayers use heavy foundation, contouring, colored contacts, prosthetics, wigs, and body paint. Their skin WILL look unnaturally smooth, their features WILL look altered, and their appearance may seem "too perfect." This is NOT evidence of AI.
+* **Professional makeup and beauty photography:** Studio portraits, fashion shoots, headshots, and editorial work routinely involve professional makeup artists, ring lights, softboxes, beauty dishes, and deliberate skin smoothing in-camera via lighting. Smooth skin ≠ AI.
+* **Phone beauty filters and camera apps:** Billions of real photos are taken with Samsung, iPhone, Xiaomi, and Huawei beauty modes that smooth skin, enlarge eyes, slim faces, and add virtual makeup in real-time. These are real photos of real people with real-time filters. They are NOT deepfakes.
+* **Instagram/TikTok post-processing:** Real people routinely apply Facetune, VSCO, Lightroom presets, and skin-smoothing edits. Heavy editing ≠ AI generation.
+* **Low-light and flash photography:** Harsh flash washes out skin texture, creates flat lighting, and makes skin appear smooth or "waxy." This is physics, not AI.
+* **Compression artifacts:** Images shared on WhatsApp, Instagram, Facebook, and other platforms are heavily re-compressed, losing fine detail like pores, hair strands, and fabric texture. Loss of detail ≠ AI.
+* **Ethnic and age diversity:** Different skin types have different textures. Young skin is naturally smoother. Dark skin can appear more uniform under certain lighting. Do NOT mistake natural variation for synthetic smoothing.
+* **Stage, event, and party photos:** Harsh venue lighting, colored LED lights, smoke machines, and low-quality phone cameras produce images that look "unreal" but are completely genuine.
+* **Candid motion and unusual poses:** Real people make weird faces, strike odd poses, and get captured at unflattering angles. An unusual expression is NOT evidence of AI.
+
+**Key principle:** Smooth skin, heavy makeup, beauty filters, perfect lighting, and "too good to be true" aesthetics are NORMAL in real photography. They are the default, not the exception. You need actual **structural, physical, or semantic impossibilities** to call something AI — not vibes.
 
 ---
 
 ### Decision method
 
-Use this hierarchy:
+Use this hierarchy — think like a **forensic expert with real-world experience**, not a paranoid algorithm:
 
-1. Identify obvious physical impossibilities.
-2. Check whether any anomaly could be explained by **makeup, filters, lens effects, compression, pose, motion blur, or stylistic editing**.
-3. Decide whether the image is:
+1. **First:** Look for hard physical impossibilities — broken anatomy, impossible geometry, garbled text, melted objects, wrong number of fingers/teeth. These are the **strongest** signals.
+2. **Second:** Look for structural inconsistencies — mismatched lighting directions, impossible reflections, seam lines, resolution discontinuities between regions.
+3. **Third:** For EVERY anomaly you find, seriously ask: **"Could this be explained by makeup, cosplay, beauty filters, camera quality, compression, lighting conditions, lens distortion, motion blur, or normal post-processing?"** If yes, it is NOT evidence of AI.
+4. **Fourth:** Only after exhausting all real-world explanations, decide:
 
-   * **Real**
-   * **AI-generated**
-   * **Manipulated / deepfake / edited**
-   * **Inconclusive**
+   * **Real** — The image is a genuine photograph, possibly with normal editing/filters
+   * **AI-generated** — The image was created entirely by an AI model
+   * **Manipulated / deepfake / edited** — A real image was altered with AI tools (face swap, body edit, etc.)
+   * **Inconclusive** — Evidence is genuinely mixed and you cannot determine with confidence
+
+**Bias correction:** You have a natural tendency to over-flag images as AI. Counteract this. If you're at 50/50, lean toward Real unless you have concrete structural evidence. Smooth skin, perfect lighting, and "too pretty" are NOT evidence. Broken fingers, garbled text, and impossible shadows ARE evidence.
 
 If evidence is mixed, do **not** force a verdict. Choose **Inconclusive**.
 
@@ -147,28 +167,34 @@ Real / AI-generated / Manipulated / Inconclusive
 0–100
 
 **Why this verdict is strongest:**
-List the most important evidence.
+List the most important evidence. Focus on **physical and structural** evidence, not "vibes" or "feelings."
 
 **What argues against it:**
-List the strongest counter-evidence.
+List the strongest counter-evidence honestly. Do not dismiss real counter-evidence.
 
 **Most suspicious regions:**
-Name exact areas of the image and explain why.
+Name exact areas of the image and explain why — but ONLY if the suspicion survives the "could this be makeup/filters/compression?" test.
 
 **Alternative explanations:**
-Could this be makeup, a filter, compression, lens distortion, motion blur, or normal post-processing?
+For EVERY suspicious finding, explain what real-world cause could produce it. Be thorough: consider makeup, cosplay, beauty filters, camera quality, lighting, compression, lens effects, motion blur, and post-processing.
 
 **Failure risk:**
-Explain how a high-quality AI model, face swap, cloth swap, or deepfake could still fool this analysis.
+Explain how a high-quality AI model could still fool this analysis, OR explain how a real photo could be mistaken for AI.
 
 ---
 
 ### Final instruction
 
-Be strict, skeptical, and realistic.
-Do not overclaim.
-Do not mistake beauty filters, makeup, compression, or stylized photography for AI unless the physical evidence actually supports it.
-At the same time, do not trust surface realism alone: a convincing image can still be synthetic.
+**Think like a real human expert, not a machine.**
+A real forensic analyst has seen thousands of cosplay photos, beauty-filtered selfies, professional portraits, and Instagram edits. They know that "smooth skin" and "perfect lighting" are the NORM in modern photography, not red flags.
+
+Be strict about **actual physical impossibilities**: broken anatomy, garbled text, impossible shadows, melted objects.
+Be lenient about **aesthetic perfection**: smooth skin, heavy makeup, beauty filters, professional lighting, and "too good to be true" qualities.
+
+Do not overclaim. Do not mistake beauty for fakery.
+At the same time, do not trust surface realism alone: a truly convincing deepfake will have perfect aesthetics but broken physics.
+
+**Your job is to find broken physics, not judge beauty standards.**
 """
 
 
@@ -233,10 +259,10 @@ def analyze_with_gemini(image_path: str) -> str:
             last_error = e
             error_msg = str(e).lower()
 
-            # Retry on transient / quota errors
+            # Retry on transient / quota / bad-key errors
             is_retryable = any(
                 token in error_msg
-                for token in ["429", "500", "503", "quota", "exhausted", "internal", "unavailable", "overloaded"]
+                for token in ["429", "500", "503", "quota", "exhausted", "internal", "unavailable", "overloaded", "api_key_invalid", "api key not valid"]
             )
 
             if is_retryable:
@@ -248,7 +274,7 @@ def analyze_with_gemini(image_path: str) -> str:
                 time.sleep(wait)
                 continue
 
-            # Non-retryable (e.g. 400 Bad Request, auth error)
+            # Non-retryable (e.g. content safety block, malformed request)
             print(f"[GEMINI] Fatal error: {e}")
             raise RuntimeError(f"Gemini API Error: {e}")
 
