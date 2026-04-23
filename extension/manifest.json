@@ -1,13 +1,14 @@
 {
   "manifest_version": 3,
   "name": "Trinetra — Deepfake Forensic Analyzer",
-  "version": "1.0",
-  "description": "Select any region on a webpage to scan for AI manipulation using the local Trinetra model.",
+  "version": "2.0",
+  "description": "Select any region on a webpage to scan for AI manipulation using dual-layer forensic analysis.",
   "permissions": [
     "activeTab",
     "scripting",
     "contextMenus",
-    "storage"
+    "storage",
+    "tabs"
   ],
   "host_permissions": [
     "http://localhost:8000/*"
@@ -19,7 +20,8 @@
     "128": "icons/icon128.png"
   },
   "action": {
-    "default_title": "Select region to analyze",
+    "default_title": "Trinetra — Deepfake Analyzer",
+    "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",

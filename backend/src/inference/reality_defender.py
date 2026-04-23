@@ -161,6 +161,7 @@ async def _analyze_async(file_path: str) -> RDResult:
                     if models_data:
                         # Filter out None scores — the API may return null for some models
                         valid_scores = [float(s) for m in models_data if (s := m.get("score")) is not None]
+                        valid_scores = [float(m.get("score") or 0.0) for m in models_data if m.get("score") is not None]
                         calculated_score = sum(valid_scores) / len(valid_scores) if valid_scores else 0.0
                         
                         if calculated_score >= 0.5:

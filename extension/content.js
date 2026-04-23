@@ -14,6 +14,23 @@
  */
 
 (function() {
+  // ── Message listener — always register, even on re-injection ──
+  if (!window._trinetraListenerRegistered) {
+    window._trinetraListenerRegistered = true;
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+      if (request.action === "ping") {
+        sendResponse({ status: "pong" });
+        return false;
+      }
+      if (request.action === "toggle-selection") {
+        window._trinetraActivate?.();
+        sendResponse({ status: "active" });
+        return false;
+      }
+    });
+  }
+
+  // ── Guard against double-init of UI logic ──
   if (window._trinetraInitialized) return;
   window._trinetraInitialized = true;
 
@@ -33,11 +50,10 @@
   //  §1  MESSAGE LISTENER
   // ==========================================================
 
-  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === "toggle-selection") {
-      activateSelectionMode();
-    }
-  });
+  // Helper to get extension icon URLs
+  function getIconUrl(name) {
+    return chrome.runtime.getURL(`icons/${name}`);
+  }
 
   // ==========================================================
   //  §2  SELECTION MODE
@@ -55,6 +71,9 @@
     overlay.addEventListener('mouseup', finishSelection);
     window.addEventListener('keydown', cancelSelection);
   }
+
+  // Expose for the message listener
+  window._trinetraActivate = activateSelectionMode;
 
   function cancelSelection(e) {
     if (e.key === 'Escape') cleanup();
@@ -238,6 +257,7 @@
     modal.className = 'trinetra-modal';
 
     const isFake = data.primary_verdict === "FAKE";
+    const isUncertain = data.primary_verdict === "UNCERTAIN" || data.primary_verdict === "INCONCLUSIVE";
     const statusClass = isFake ? "status-fake" : "status-real";
     const parentStatusClass = isFake ? "status-fake-parent" : "status-real-parent";
     const confidence = data.confidence_score || 0;

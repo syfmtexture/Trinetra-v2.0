@@ -12,7 +12,6 @@ Run:  python -m whatsapp_bot          (from backend/ directory)
 import os
 import sys
 import logging
-import threading
 
 import httpx
 from flask import Flask, request, jsonify

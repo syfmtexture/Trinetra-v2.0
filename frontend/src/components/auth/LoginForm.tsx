@@ -13,11 +13,11 @@ export default function LoginForm() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: implement actual auth with MongoDB via API
-    router.push('/');
+    router.push('/dashboard');
   };
 
   const handleGuestLogin = () => {
-    router.push('/');
+    router.push('/dashboard');
   };
 
   return (

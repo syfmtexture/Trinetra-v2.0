@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trinetra</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <!-- ── Header ── -->
+  <div class="tri-header">
+    <img src="icons/logo.png" alt="Trinetra Logo" class="tri-logo">
+    <div class="tri-brand">
+      <span class="tri-title">TRINETRA</span>
+      <span class="tri-subtitle">Deepfake Forensic Analyzer</span>
+    </div>
+  </div>
+
+  <!-- ── Divider ── -->
+  <div class="tri-divider"></div>
+
+  <!-- ── Analysis Engine Toggles ── -->
+  <div class="tri-section">
+    <div class="tri-section-label">
+      <img src="icons/shield.png" class="tri-section-icon" alt="">
+      ANALYSIS ENGINE
+    </div>
+
+    <div class="tri-toggle-row" id="toggle-local">
+      <div class="tri-toggle-info">
+        <span class="tri-toggle-name">Local Model</span>
+        <span class="tri-toggle-desc">Hybrid CNN · On-Device</span>
+      </div>
+      <label class="tri-switch">
+        <input type="checkbox" id="switch-local" checked>
+        <span class="tri-slider"></span>
+      </label>
+    </div>
+
+    <div class="tri-toggle-row" id="toggle-cloud">
+      <div class="tri-toggle-info">
+        <span class="tri-toggle-name">Cloud API</span>
+        <span class="tri-toggle-desc">Reality Defender · Remote</span>
+      </div>
+      <label class="tri-switch">
+        <input type="checkbox" id="switch-cloud" checked>
+        <span class="tri-slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- ── Warning Toast ── -->
+  <div class="tri-warning" id="tri-warning">
+    <img src="icons/alert.png" class="tri-warning-icon" alt="">
+    <span>At least one engine must be active.</span>
+  </div>
+
+  <!-- ── Scan Button ── -->
+  <button class="tri-scan-btn" id="btn-scan">
+    <img src="icons/scan.png" class="tri-scan-icon" alt="">
+    <span>SCAN REGION</span>
+  </button>
+
+  <!-- ── Footer Status ── -->
+  <div class="tri-footer">
+    <div class="tri-status" id="tri-status">
+      <span class="tri-status-dot offline"></span>
+      <span class="tri-status-text">Checking server...</span>
+    </div>
+    <span class="tri-version">v2.0</span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
