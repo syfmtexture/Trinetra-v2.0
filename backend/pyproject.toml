@@ -1,3 +1,6 @@
+[tool.pyrefly]
+search_path = ["."]
+
 [tool.pyright]
 include = ["src"]
 extraPaths = ["src"]
