@@ -13,7 +13,7 @@ import os
 import sys
 import logging
 import threading
-
+import time
 import httpx
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
@@ -46,6 +46,18 @@ app = Flask(__name__)
 # Deduplication: track processed message IDs to avoid duplicate responses
 _processed_messages: set[str] = set()
 _msg_lock = threading.Lock()
+
+
+def cleanup_processed_messages():
+    """Periodically clear the processed messages set to prevent memory leaks."""
+    while True:
+        time.sleep(3600)  # Cleanup every hour
+        with _msg_lock:
+            _processed_messages.clear()
+            logger.info("Cleared processed messages cache.")
+
+# Start cleanup thread
+threading.Thread(target=cleanup_processed_messages, daemon=True).start()
 
 
 # ─────────────────────────────────────────────
