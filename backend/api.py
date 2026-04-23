@@ -13,7 +13,13 @@ import base64
 import time
 import io
 import asyncio
+import numpy as np
 from typing import Optional, List, Any, TYPE_CHECKING
+
+# Ensure 'backend' directory is in PYTHONPATH so 'src' can be imported correctly
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+if _script_dir not in sys.path:
+    sys.path.append(_script_dir)
 
 if TYPE_CHECKING:
     # Stubs for the IDE when libraries are not indexed/installed
@@ -49,9 +55,10 @@ else:
     _ML_AVAILABLE = False
     try:
         from src.inference.infer import run_inference, InferenceResult
+        from src.inference.gemini_scanner import analyze_with_gemini
         from src.core.config import MODEL_DIR
         _ML_AVAILABLE = True
-        print("[OK] ML model loaded successfully.")
+        print("[OK] ML model modules loaded successfully.")
     except Exception as _ml_err:
         print(f"[WARN] ML model unavailable: {_ml_err}. Running in DEMO mode.")
         MODEL_DIR = ""
@@ -65,11 +72,6 @@ else:
                 self.rd_result = None
         def run_inference(*args, **kwargs):  # type: ignore
             return InferenceResult()
-
-# Ensure 'backend' directory is in PYTHONPATH so 'src' can be imported correctly
-_script_dir = os.path.dirname(os.path.abspath(__file__))
-if _script_dir not in sys.path:
-    sys.path.append(_script_dir)
 
 def safe_round(val: Any, digits: int = 2) -> float:
     """Helper to ensure type-checkers see a float return without using round() built-in."""
@@ -191,13 +193,16 @@ async def analyze_image(request: AnalysisRequest):
             summary = f"🛡️ LOCAL VERDICT: {local_label} ({local_conf:.1f}%). Cloud verification was unavailable{rd_reason}."
 
         # 7. Convert images to base64
-        def pil_to_base64(img: Image.Image) -> str:
+        def img_to_base64(img: Any) -> str:
+            if isinstance(img, np.ndarray):
+                img = Image.fromarray(img)
             buffered = io.BytesIO()
             img.save(buffered, format="PNG")
             return base64.b64encode(buffered.getvalue()).decode()
 
-        face_b64 = pil_to_base64(result.face_crop) if result.face_crop else None
-        grad_b64 = pil_to_base64(result.gradcam_overlay) if result.gradcam_overlay else None
+        # result arrays might be None if no face was found or XAI failed
+        face_b64 = img_to_base64(result.face_crop) if result.face_crop is not None else None
+        grad_b64 = img_to_base64(result.gradcam_overlay) if result.gradcam_overlay is not None else None
 
         return AnalysisResponse(
             primary_verdict=str(primary_verdict),
@@ -234,6 +239,58 @@ async def subscribe(request: SubscriptionRequest):
 @app.get("/health")
 async def health_check():
     return {"status": "online", "model": "EfficientNet-V2-S"}
+
+class AdvanceScanRequest(BaseModel):
+    base64_data: str
+
+class AdvanceScanResponse(BaseModel):
+    analysis: str
+
+@app.post("/advance-scan", response_model=AdvanceScanResponse)
+async def advance_scan(request: AdvanceScanRequest):
+    try:
+        # Decode base64 data
+        header, data = request.base64_data.split(",", 1) if "," in request.base64_data else (None, request.base64_data)
+        image_bytes = base64.b64decode(data)
+        
+        ext = ".png"
+        if header:
+            mime_map = {
+                "image/png": ".png", "image/jpeg": ".jpg", "image/jpg": ".jpg",
+                "image/bmp": ".bmp", "image/webp": ".webp",
+            }
+            for mime, extension in mime_map.items():
+                if mime in header.lower():
+                    ext = extension
+                    break
+                    
+        temp_dir = os.path.join(os.getcwd(), "tmp_api")
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_filename = f"gemini_{uuid.uuid4()}{ext}"
+        temp_path = os.path.join(temp_dir, temp_filename)
+        
+        with open(temp_path, "wb") as f:
+            f.write(image_bytes)
+            
+        print(f"[ADVANCE-SCAN] Sending to Gemini: {temp_filename}")
+        
+        # Run Gemini API call in a thread to not block event loop
+        analysis_text = await asyncio.to_thread(analyze_with_gemini, temp_path)
+        
+        # Cleanup
+        try:
+            os.remove(temp_path)
+        except:
+            pass
+            
+        return AdvanceScanResponse(analysis=analysis_text)
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print(f"[ADVANCE-SCAN Error]: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
     import uvicorn # type: ignore

@@ -93,3 +93,29 @@ export async function subscribeToNewsletter(email: string): Promise<{ status: st
 
   return res.json();
 }
+
+// ── Advance Scan ──
+
+export interface AdvanceScanResponse {
+  analysis: string;
+}
+
+/**
+ * Send a file for advanced multimodal forensic analysis via Gemini.
+ */
+export async function advanceScan(file: File): Promise<AdvanceScanResponse> {
+  const base64Data = await fileToBase64(file);
+
+  const res = await fetch(`${API_BASE}/advance-scan`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ base64_data: base64Data }),
+  });
+
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({ detail: 'Unknown error' }));
+    throw new Error(errorBody.detail || `Advance scan failed: ${res.status}`);
+  }
+
+  return res.json();
+}

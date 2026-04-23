@@ -34,7 +34,7 @@ from src.core.config import (
     VIDEO_EXTENSIONS,
     AUDIO_EXTENSIONS,
 )
-from src.models.model import DeepfakeDetector
+from src.models.model import load_detector_from_checkpoint
 from src.inference.xai import (
     geometric_jitter_mapping,
     noise_residual_extraction,
@@ -93,7 +93,7 @@ class GradCAM:
     activations and gradients, then produces a spatial heatmap.
     """
 
-    def __init__(self, model: DeepfakeDetector):
+    def __init__(self, model: torch.nn.Module):
         self.model = model
         self._activations: torch.Tensor | None = None
         self._gradients: torch.Tensor | None = None
@@ -358,13 +358,9 @@ def run_inference(
             forensic_log={"media_type": "audio", "reality_defender": rd_result_dict}
         )
 
-    # ── Load model (cached) ──
+    # ── Load model (cached, auto-detects legacy vs current architecture) ──
     if "model" not in _model_cache or _model_cache.get("ckpt") != checkpoint_path:
-        model = DeepfakeDetector().to(DEVICE)
-        ckpt = torch.load(checkpoint_path, map_location=DEVICE, weights_only=False)
-        state = ckpt.get("model_state_dict", ckpt)
-        model.load_state_dict(state)
-        model.eval()
+        model = load_detector_from_checkpoint(checkpoint_path, DEVICE)
         _model_cache["model"] = model
         _model_cache["ckpt"] = checkpoint_path
         _model_cache["gradcam"] = GradCAM(model)
