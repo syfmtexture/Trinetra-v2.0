@@ -12,6 +12,13 @@ if _backend_dir not in sys.path:
 from src.inference.infer import run_inference
 
 def main():
+    """
+    A quick 'sanity check' script.
+    
+    It creates a fake, random-pixel image and tries to run it through the 
+    inference pipeline. If this works, the plumbing of the system (PyTorch, 
+    model loading, etc.) is healthy.
+    """
     checkpoint_path = os.path.join("model", "best_model.pt")
     
     # Create a dummy image

@@ -66,7 +66,14 @@ augment = A.Compose([
 # ──────────────────────────────────────────────
 
 def sample_video_frames(video_path: str, n_frames: int = SEQ_LEN) -> list[np.ndarray]:
-    """Uniformly sample `n_frames` RGB frames from a video file."""
+    """
+    The 'Time Machine' function.
+    
+    We don't need every single frame of a video (that would be thousands!). 
+    Instead, we jump through the video at equal intervals and grab 20 
+    representative snapshots. This gives the AI enough information to see 
+    the whole story without drowning in data.
+    """
     cap = cv2.VideoCapture(video_path)
     total = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     if total <= 0:
@@ -88,9 +95,13 @@ def batch_extract_faces(
     frames_rgb: list[np.ndarray],
 ) -> list[list[np.ndarray]]:
     """
-    Run MTCNN on ALL frames in a single GPU forward pass.
-    Returns one list of face-crops per frame.
-    Produces identical crops to single-frame detect — zero accuracy impact.
+    The 'Face-Finder' (Optimized).
+    
+    Instead of finding a face in Frame 1, then Frame 2, then Frame 3, we 
+    hand all 20 frames to the GPU at once. This 'Batch Extraction' is 
+    way faster than doing them one by one. 
+    
+    It returns a list of faces it found in each frame.
     """
     pil_frames = [Image.fromarray(f) for f in frames_rgb]
     boxes_batch, probs_batch = detector.detect(pil_frames)  # one batched GPU call
@@ -130,13 +141,14 @@ def augment_and_save(face_rgb: np.ndarray, save_path: str) -> None:
 
 def discover_files(src_dir: str) -> list[tuple[str, int, str]]:
     """
-    Returns list of (filepath, label_int, label_name).
+    The 'Detective' function.
     
-    Supports four layouts:
-      1. DFDC: flat dir with metadata.json  →  reads labels from JSON
-      2. FaceForensics++: original/ + deepfake method subdirs
-      3. Generic: src_dir/real/ and src_dir/fake/ subdirs
-      4. Flat-fake: flat dir of videos, all treated as FAKE (e.g. DFD)
+    Deepfake datasets come in all shapes and sizes. Some have JSON metadata 
+    (DFDC), some have weird folder names (FaceForensics++), and some are 
+    just real/fake folders. 
+    
+    This function snoops around the source directory, figures out which 
+    format it's looking at, and creates a master list of files to process.
     """
     meta_path = os.path.join(src_dir, "metadata.json")
 
@@ -313,7 +325,9 @@ def process_dataset(src_dir: str, dst_dir: str, append: bool = False) -> None:
                     skipped_count += 1
                     continue
                 img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                faces = extract_faces(img_rgb)
+                # Use the batched extractor for consistency, even for one frame
+                faces_per_frame = batch_extract_faces([img_rgb])
+                faces = faces_per_frame[0] if faces_per_frame else []
 
                 if not faces:
                     skipped_count += 1

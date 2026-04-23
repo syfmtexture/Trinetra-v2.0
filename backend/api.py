@@ -118,14 +118,23 @@ class AnalysisResponse(BaseModel):
 
 @app.post("/analyze", response_model=AnalysisResponse)
 async def analyze_image(request: AnalysisRequest):
-    # ── DEMO MODE: return realistic mock data ──
+    """
+    The standard 'Fast Scan' endpoint. 
+    
+    It decodes an image, runs our local EfficientNet model, checks Reality Defender (cloud), 
+    and then plays 'Judge' to decide which result is more trustworthy.
+    """
+    # ── DEMO MODE: A safe playground for testing the UI without burning API keys ──
     if DEMO_MODE:
         import random
-        await asyncio.sleep(random.uniform(0.8, 2.0))  # simulate latency
-        is_fake_demo = random.random() > 0.35  # 65% chance FAKE for demo
+        # We add a little delay so it 'feels' like real work is happening
+        await asyncio.sleep(random.uniform(0.8, 2.0)) 
+        
+        is_fake_demo = random.random() > 0.35 
         fake_prob = random.uniform(72.0, 96.5) if is_fake_demo else random.uniform(8.0, 28.0)
         local_label = "FAKE" if is_fake_demo else "REAL"
         local_conf = fake_prob if is_fake_demo else (100.0 - fake_prob)
+        
         return AnalysisResponse(
             primary_verdict="FAKE" if is_fake_demo else "REAL",
             confidence_score=safe_round(fake_prob if is_fake_demo else (100.0 - fake_prob), 2),
@@ -134,13 +143,7 @@ async def analyze_image(request: AnalysisRequest):
             rd_status="SUSPICIOUS" if is_fake_demo else "AUTHENTIC",
             rd_score=safe_round(random.uniform(0.70, 0.95) if is_fake_demo else random.uniform(0.05, 0.20), 4),
             forensic_summary=(
-                f"🚨 CLOUD VERDICT: SUSPICIOUS ({fake_prob:.1f}%). "
-                f"Local model reports {local_label} ({local_conf:.1f}%). "
-                "Multiple spatial anomalies detected in facial region — inconsistent subsurface scattering on left cheek, "
-                "edge halo around jawline, and unnatural specular highlight on iris."
-            ) if is_fake_demo else (
-                f"✅ CLOUD VERDICT: AUTHENTIC. High confidence cloud analysis confirmed media is real. "
-                f"Local model concurs: REAL ({local_conf:.1f}%). No spatial or temporal anomalies detected."
+                "DEMO MODE: This is a simulation of how the AI would describe a deepfake finding."
             ),
             latency_ms=safe_round(random.uniform(800, 3200), 2),
             face_crop_base64=None,
@@ -206,15 +209,15 @@ async def analyze_image(request: AnalysisRequest):
         local_label = "FAKE" if result.label == "FAKE" else "REAL"
         local_conf = pct if local_label == "FAKE" else (100 - pct)
         
-        # 6. Prioritize "Most Correct" (Cloud > Local)
-        # As local model is not fully trained, RD Cloud is the primary authority.
+        # 6. Prioritize "Most Correct" (Cloud vs Local)
+        # Why: Reality Defender (RD) is a massive cloud-scale service. If it says 
+        # something is FAKE with high confidence, we trust it more than our local model.
         rd = result.rd_result
         rd_status = rd.get("status") if rd else "DISABLED"
         rd_score_raw = rd.get("score") if rd else None
         rd_score = float(rd_score_raw) if rd_score_raw is not None else 0.0
         
-        # Logic: If RD found it FAKE/MANIPULATED, that's our primary verdict.
-        # Gate on rd_status being a valid actionable verdict (not ERROR/DISABLED/SKIPPED)
+        # If the cloud finds a smoking gun, that's our main verdict.
         if rd and rd_status in ["FAKE", "MANIPULATED", "SUSPICIOUS"] and rd_score_raw is not None:
             primary_verdict = "FAKE"
             confidence_score = rd_score * 100
@@ -224,7 +227,7 @@ async def analyze_image(request: AnalysisRequest):
             confidence_score = (1.0 - rd_score) * 100
             summary = f"✅ CLOUD VERDICT: AUTHENTIC. High confidence cloud analysis confirmed media is real."
         else:
-            # Fallback to local if RD is offline, errored, or inconclusive
+            # If the cloud is offline or unsure, our local AI takes the lead.
             primary_verdict = local_label
             confidence_score = local_conf
             rd_reason = f" ({rd_status})" if rd_status and rd_status not in ["DISABLED", "None"] else ""
@@ -286,6 +289,12 @@ class AdvanceScanResponse(BaseModel):
 
 @app.post("/advance-scan", response_model=AdvanceScanResponse)
 async def advance_scan(request: AdvanceScanRequest):
+    """
+    The 'Super Expert' endpoint. 
+    
+    This doesn't just give a 'Yes/No'. It sends the image to Google's Gemini (Gemma-4)
+    along with a massive forensic manual to perform a human-like investigation.
+    """
     # ── DEMO MODE: return a realistic Gemini-style forensic report ──
     if DEMO_MODE:
         import random

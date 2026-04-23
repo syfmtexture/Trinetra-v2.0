@@ -33,16 +33,11 @@ log = logging.getLogger(__name__)
 
 class LegacyDeepfakeDetector(nn.Module):
     """
-    Original Trinetra model trained with EfficientNet-B4 backbone and
-    single-layer LSTM for temporal analysis.
-
-    Checkpoint fingerprint: contains 'lstm.weight_ih_l0' key.
-
-    Architecture
-    ────────────
-    Backbone     : EfficientNet-B4  → 1792-d feature per frame
-    Temporal     : LSTM (hidden=512, 1 layer)
-    Classifiers  : fc_seq (512→1) for sequences, fc_static (1792→1) for images
+    The 'Old Reliable' architecture.
+    
+    This is what we used in the early versions of Trinetra. It uses 
+    EfficientNet-B4 for vision and an LSTM for memory. It's slower and 
+    uses more VRAM, but it's very solid for basic face-swaps.
     """
 
     _FEATURE_DIM = 1792
@@ -120,28 +115,29 @@ class LegacyDeepfakeDetector(nn.Module):
 
 class DeepfakeDetector(nn.Module):
     """
-    Forward signature
-    -----------------
-    x : Tensor of shape (B, T, C, H, W)
-        • T = SEQ_LEN for video sequences
-        • T = 1       for static images
-
-    Returns
-    -------
-    logits : Tensor of shape (B, 1)
-        Raw logit (apply sigmoid for probability).
+    The 'State-of-the-Art' architecture.
+    
+    This is the current engine. It uses EfficientNet-V2-S (which is faster and 
+    smarter) paired with a Transformer. 
+    
+    Why a Transformer?
+    Unlike older LSTMs, Transformers can look at all 20 frames of a video 
+    simultaneously. This makes them incredibly good at spotting 'glitches' that 
+    don't just happen one after another, but across the entire clip.
     """
 
     def __init__(self):
         super().__init__()
 
-        # ── 1. Spatial feature extractor (EfficientNet-V2-S) ──
+        # ── 1. The 'Eyes' (EfficientNet-V2-S) ──
+        # This part of the brain is trained to recognize faces, skin textures, 
+        # and light reflections. We use a pre-trained version from ImageNet 
+        # so it already knows what a 'real' object looks like.
         backbone = models.efficientnet_v2_s(weights=models.EfficientNet_V2_S_Weights.IMAGENET1K_V1)
 
-        # Remove the original classifier head
-        self.features = backbone.features         # Sequential of blocks
-        self.pool = backbone.avgpool              # AdaptiveAvgPool2d
-        feature_dim = EFFICIENTNET_FEATURE_DIM    # 1280
+        self.features = backbone.features
+        self.pool = backbone.avgpool
+        feature_dim = EFFICIENTNET_FEATURE_DIM
 
         # Freeze the lower blocks
         for i, block in enumerate(self.features):
@@ -149,7 +145,9 @@ class DeepfakeDetector(nn.Module):
                 for param in block.parameters():
                     param.requires_grad = False
 
-        # ── 2. Temporal sequence analyzer (Transformer Encoder) ──
+        # ── 2. The 'Memory' (Transformer Encoder) ──
+        # This part looks at the sequence of frames. It's looking for things 
+        # that don't belong in time—like an eye flickering for just one frame.
         self.pos_embedding = nn.Parameter(torch.randn(1, SEQ_LEN, feature_dim))
 
         encoder_layer = nn.TransformerEncoderLayer(
@@ -255,15 +253,11 @@ def load_detector_from_checkpoint(
     device: torch.device,
 ) -> nn.Module:
     """
-    Inspect a checkpoint's keys to determine which architecture it was
-    trained with, instantiate the correct model, and load the weights.
-
-    Detection logic
-    ───────────────
-    • 'lstm.weight_ih_l0' in keys  →  LegacyDeepfakeDetector (B4 + LSTM)
-    • 'transformer.layers.*'       →  DeepfakeDetector        (V2-S + Transformer)
-
-    Returns the model in eval mode on the requested device.
+    The 'Auto-Switcher'.
+    
+    You don't need to tell this function which model you're using. 
+    It opens the 'best_model.pt' file, looks at the internal wiring (keys), 
+    and automatically builds the correct architecture (Legacy or Current).
     """
     ckpt = torch.load(checkpoint_path, map_location=device, weights_only=False)
     state = ckpt.get("model_state_dict", ckpt)

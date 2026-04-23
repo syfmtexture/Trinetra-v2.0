@@ -11,61 +11,68 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ──────────────────────────────────────────────
-#  Paths
+#  Paths: Where everything lives
 # ──────────────────────────────────────────────
+# We use absolute paths derived from this file's location to avoid 'file not found' 
+# errors when running the bot from different directories.
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-PROCESSED_DIR = os.path.join(PROJECT_ROOT, "processed_data")   # output of preprocess.py
-RAW_DATA_DIR = r"D:\download\dfdc_train_part_02"
-METADATA_CSV  = os.path.join(PROCESSED_DIR, "metadata.csv")
-MODEL_DIR     = os.path.join(PROJECT_ROOT, "model")               # best_model.pt lives here
-CHECKPOINT_DIR = os.path.join(MODEL_DIR, "checkpoints")           # epoch_*.pt lives here
+PROCESSED_DIR = os.path.join(PROJECT_ROOT, "processed_data")   # Our 'kitchen' where we prep data
+RAW_DATA_DIR = r"D:\download\dfdc_train_part_02"              # The raw, messy input data
+METADATA_CSV  = os.path.join(PROCESSED_DIR, "metadata.csv")    # The 'index' for all our files
+MODEL_DIR     = os.path.join(PROJECT_ROOT, "model")               # The 'brain' storage
+CHECKPOINT_DIR = os.path.join(MODEL_DIR, "checkpoints")           # Save points during training
 
 # ──────────────────────────────────────────────
-#  Reality Defender Cloud API
+#  Reality Defender Cloud API: Our second opinion
 # ──────────────────────────────────────────────
+# We support multiple keys to avoid 'out of quota' errors.
 _rd_keys_raw = os.environ.get("RD_API_KEYS", "")
 RD_API_KEYS: list[str] = [k.strip() for k in _rd_keys_raw.split(",") if k.strip()]
 RD_ENABLED = len(RD_API_KEYS) > 0
-RD_TIMEOUT = int(os.environ.get("RD_TIMEOUT", "120"))
+RD_TIMEOUT = int(os.environ.get("RD_TIMEOUT", "120")) # Give the cloud 2 mins to respond
 RD_RETRY_DELAY = int(os.environ.get("RD_RETRY_DELAY", "2"))
-RD_SUPPORTED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".mp3", ".wav", ".m4a", ".aac", ".ogg", ".flac", ".alac"}
-RD_MAX_IMAGE_SIZE_MB = 10
-RD_MAX_VIDEO_SIZE_MB = 250
-RD_MAX_AUDIO_SIZE_MB = 20
-RD_MAX_DOC_SIZE_MB = 5
 
 # ──────────────────────────────────────────────
-#  Preprocessing
+#  Gemini AI: The Advanced Forensic Engine
 # ──────────────────────────────────────────────
-IMG_SIZE = 384                     # EfficientNet-V2-S native resolution
-SEQ_LEN = 20                      # Frames sampled per video
+_gemini_keys_raw = os.environ.get("GEMINI_API_KEYS", "")
+GEMINI_API_KEYS: list[str] = [k.strip() for k in _gemini_keys_raw.split(",") if k.strip()]
+GEMINI_ENABLED = len(GEMINI_API_KEYS) > 0
+
+# ──────────────────────────────────────────────
+#  Preprocessing: Making media AI-friendly
+# ──────────────────────────────────────────────
+IMG_SIZE = 384                     # Sweet spot for EfficientNet-V2-S (high detail, low VRAM)
+SEQ_LEN = 20                      # We look at 20 frames per video to spot temporal 'flickering'
 VIDEO_EXTENSIONS = {".mp4", ".avi", ".mov", ".mkv"}
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp"}
 AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a", ".aac", ".ogg", ".flac"}
 
 # ──────────────────────────────────────────────
-#  Model
+#  Model Architecture: The Neural Network Specs
 # ──────────────────────────────────────────────
-EFFICIENTNET_FEATURE_DIM = 1280   # EfficientNet-V2-S output features
-TRANSFORMER_HEADS = 8             # Multi-head attention heads
-TRANSFORMER_LAYERS = 4            # Number of transformer encoder layers
-TRANSFORMER_DIM_FF = 2048         # Feed-forward dimension
-FREEZE_BLOCKS = 5                 # Freeze first N EfficientNet blocks
-DROPOUT = 0.3
+EFFICIENTNET_FEATURE_DIM = 1280   # What the 'eyes' of the model see
+TRANSFORMER_HEADS = 8             # 'Attention' heads that look for inconsistencies
+TRANSFORMER_LAYERS = 4            # Depth of the temporal reasoning
+TRANSFORMER_DIM_FF = 2048         # Hidden layers in the transformer
+FREEZE_BLOCKS = 5                 # We keep the early 'eyes' frozen to preserve general vision
+DROPOUT = 0.3                     # Prevents the model from getting too 'confident' and memorizing data
 
 # ──────────────────────────────────────────────
-#  Training  (tuned for RTX 4060 8 GB VRAM)
+#  Training: Taming the Beast (Optimized for RTX 4060 8GB)
 # ──────────────────────────────────────────────
-BATCH_SIZE = 4                    # Real micro-batch size
-ACCUM_STEPS = 8                   # Effective batch = BATCH_SIZE * ACCUM_STEPS = 32
+# We use Gradient Accumulation to simulate a large batch size on limited hardware.
+BATCH_SIZE = 4                    # Small actual batch to fit in 8GB VRAM
+ACCUM_STEPS = 8                   # We wait 8 steps before updating, effectively batch = 32
 EPOCHS = 20
-LR = 1e-4
+LR = 1e-4                          # Learning rate: not too fast, not too slow
 WEIGHT_DECAY = 1e-4
-NUM_WORKERS = 4                   # Safe for i7-13650HX (14 cores) + 24 GB RAM on Windows
-VAL_SPLIT = 0.2                   # 80/20 train/val
+NUM_WORKERS = 4                   # Parallel loading: uses about 4 CPU cores
+VAL_SPLIT = 0.2                   # Keep 20% of data for the 'final exam' (validation)
 RANDOM_SEED = 42
 
 # ──────────────────────────────────────────────
-#  Device
+#  Hardware: CPU vs GPU
 # ──────────────────────────────────────────────
+# We always prefer CUDA (NVIDIA GPU) for massive speedups.
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")

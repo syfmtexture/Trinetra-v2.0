@@ -112,8 +112,14 @@ def forward_subbatch(
     criterion: nn.Module,
 ) -> tuple[torch.Tensor | None, int, int]:
     """
-    Run forward + loss for one sub-batch (either sequence or static).
-    Returns (loss, correct_count, total_count).
+    Runs a 'mini-test' for a small group of images.
+    
+    This function takes a few images, asks the model 'Are these real?', and 
+    then calculates how wrong the model was (loss). 
+    
+    We use 'Label Smoothing' (0.05) here. Instead of telling the AI 'This is 
+    definitely 100% fake', we say 'This is 95% likely to be fake'. This keeps 
+    the AI humble and prevents it from over-learning specific pixels.
     """
     if frames is None:
         return None, 0, 0
@@ -144,7 +150,20 @@ def train_one_epoch(
     criterion: nn.Module,
     scaler: GradScaler,
 ) -> tuple[float, float]:
-    """Returns (avg_loss, accuracy)."""
+    """
+    The 'Study Session'.
+    
+    During one epoch, the AI looks at every single image in our dataset once. 
+    
+    Hardware Magic (RTX 4060 Optimization):
+    We use 'Mixed Precision' (autocast). This allows the AI to do math with 
+    half-sized numbers (float16) where possible, which is much faster and 
+    uses less VRAM.
+    
+    We also use 'Gradient Accumulation'. Since our GPU is small, we can't fit 
+    32 videos at once. Instead, we look at 4 videos, remember the 'lesson', 
+    repeat 8 times, and *then* update the model's brain.
+    """
     model.train()
     running_loss = 0.0
     total_correct = 0
@@ -194,7 +213,16 @@ def validate(
     loader,
     criterion: nn.Module,
 ) -> tuple[float, float, dict]:
-    """Returns (avg_loss, accuracy, metrics_dict)."""
+    """
+    The 'Final Exam'.
+    
+    After studying, we test the AI on images it has NEVER seen before. 
+    This tells us if the AI actually learned how to spot deepfakes, or if it 
+    just memorized the training photos. 
+    
+    We calculate things like 'F1 Score' and 'Precision' to see how often 
+    the AI is 'crying wolf' (false positives) versus how many fakes it missed.
+    """
     model.eval()
     running_loss = 0.0
     total_correct = 0
