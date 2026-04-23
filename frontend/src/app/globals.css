@@ -135,19 +135,20 @@
 
   body {
     @apply bg-background text-foreground antialiased overflow-x-hidden;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: var(--font-inter), system-ui, sans-serif;
     font-feature-settings: "ss01", "cv11";
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;
   }
 
   h1, h2, h3, h4, h5 {
-    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-family: var(--font-space-grotesk), system-ui, sans-serif;
     letter-spacing: -0.02em;
   }
+}
 
 @layer utilities {
-  .font-display { font-family: 'Space Grotesk', system-ui, sans-serif; }
+  .font-display { font-family: var(--font-space-grotesk), system-ui, sans-serif; }
 
   .text-gradient-brand {
     background: var(--gradient-text);
@@ -169,6 +170,14 @@
       linear-gradient(90deg, hsl(var(--border)) 1px, transparent 1px);
     background-size: 48px 48px;
     mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  }
+
+  .text-glow {
+    filter: drop-shadow(0 0 12px hsl(var(--brand-orange) / 0.4));
+  }
+
+  .glow-orange {
+    filter: drop-shadow(0 0 15px hsl(var(--brand-orange) / 0.5));
   }
 }
 
@@ -196,7 +205,6 @@
 @keyframes marquee {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
-}
 }
 
 .animate-float      { animation: float 6s ease-in-out infinite; }
