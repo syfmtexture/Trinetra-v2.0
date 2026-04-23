@@ -41,6 +41,7 @@ IMG_SIZE = 384                     # EfficientNet-V2-S native resolution
 SEQ_LEN = 20                      # Frames sampled per video
 VIDEO_EXTENSIONS = {".mp4", ".avi", ".mov", ".mkv"}
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp"}
+AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a", ".aac", ".ogg", ".flac"}
 
 # ──────────────────────────────────────────────
 #  Model

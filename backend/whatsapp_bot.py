@@ -12,6 +12,7 @@ Run:  python -m whatsapp_bot          (from backend/ directory)
 import os
 import sys
 import logging
+import threading
 
 import httpx
 from flask import Flask, request, jsonify
@@ -138,7 +139,7 @@ def verify_webhook():
 
     if mode == "subscribe" and token == VERIFY_TOKEN:
         logger.info("Webhook verified successfully!")
-        return challenge, 200
+        return challenge or "", 200
     return "Forbidden", 403
 
 
@@ -200,14 +201,14 @@ def handle_webhook():
                             result = run_inference(file_path)
 
                             # Build compact report
-                            local_icon = "🟢" if result.label == "REAL" else "🔴"
                             rd = result.rd_result
+                            response_text = f"🔍 *Trinetra Report*\n"
 
-                            # Header + Local verdict (1 line)
-                            response_text = (
-                                f"🔍 *Trinetra Report*\n"
-                                f"🤖 Local: {local_icon} {result.label} ({result.fake_probability * 100:.1f}%)\n"
-                            )
+                            if result.label == "AUDIO":
+                                response_text += "🤖 Local AI: ℹ️ Audio (Cloud only)\n"
+                            else:
+                                local_icon = "🟢" if result.label == "REAL" else "🔴"
+                                response_text += f"🤖 Local AI: {local_icon} {result.label} ({result.fake_probability * 100:.1f}%)\n"
 
                             # Cloud verdict (1 line)
                             if rd:
