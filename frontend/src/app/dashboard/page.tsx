@@ -11,6 +11,7 @@ import { UploadZone } from '@/components/dashboard/UploadZone';
 import { ResultTab } from '@/components/dashboard/ResultTab';
 import { HeatmapTab } from '@/components/dashboard/HeatmapTab';
 import { SummaryTab } from '@/components/dashboard/SummaryTab';
+import { AdvancedScanTab } from '@/components/dashboard/AdvancedScanTab';
 import { AlibiTab } from '@/components/dashboard/AlibiTab';
 import { TakedownTab } from '@/components/dashboard/TakedownTab';
 import { BlastRadiusTab } from '@/components/dashboard/BlastRadiusTab';
@@ -25,11 +26,12 @@ import {
 import { analyzeMedia, checkHealth, type AnalysisResponse } from '@/lib/api';
 
 // ─── Tab config ─────────────────────────────────────────────────
-type TabId = 'result' | 'heatmap' | 'summary';
+type TabId = 'result' | 'heatmap' | 'summary' | 'advanced';
 const TABS: { id: TabId; label: string; Icon: React.ElementType }[] = [
   { id: 'result',  label: 'Result',  Icon: Sparkles },
   { id: 'heatmap', label: 'Heatmap', Icon: FlameKindling },
   { id: 'summary', label: 'Summary', Icon: FileText },
+  { id: 'advanced', label: 'Advanced Scan', Icon: Sparkles },
 ];
 
 // ─── Victim Response tabs (FAKE only) ───────────────────────────
@@ -155,6 +157,11 @@ export default function DashboardPage() {
   const [victimTab, setVictimTab]           = useState<VictimTabId>('alibi');
   const [panicMode, setPanicMode]           = useState(false);
 
+  // Advanced scan state — lifted here so it survives tab switches
+  const [advancedAnalysis, setAdvancedAnalysis] = useState<string | null>(null);
+  const [advancedLoading, setAdvancedLoading]   = useState(false);
+  const [advancedError, setAdvancedError]       = useState<string | null>(null);
+
   const t = TRANSLATIONS[lang] || TRANSLATIONS['en'];
   const currentLang = LANGUAGE_OPTIONS.find((o) => o.code === lang);
 
@@ -176,6 +183,10 @@ export default function DashboardPage() {
     setResult(null);
     setError(null);
     setPreview(URL.createObjectURL(f));
+    // Reset advanced scan when a new file is uploaded
+    setAdvancedAnalysis(null);
+    setAdvancedLoading(false);
+    setAdvancedError(null);
   }, []);
 
   const handleClear = useCallback(() => {
@@ -357,7 +368,7 @@ export default function DashboardPage() {
             ) : (
               <div>
                 {/* Tab bar */}
-                <div className="w-full grid grid-cols-3 h-12 rounded-2xl bg-muted/60 p-1 mb-6">
+                <div className="w-full grid grid-cols-4 h-12 rounded-2xl bg-muted/60 p-1 mb-6">
                   {TABS.map(({ id, label, Icon }) => (
                     <button
                       key={id}
@@ -386,6 +397,7 @@ export default function DashboardPage() {
                     {tab === 'result'  && <ResultTab result={result} />}
                     {tab === 'heatmap' && <HeatmapTab preview={preview!} result={result} />}
                     {tab === 'summary' && <SummaryTab result={result} fileName={file?.name ?? 'image'} />}
+                    {tab === 'advanced' && <AdvancedScanTab file={file!} analysis={advancedAnalysis} setAnalysis={setAdvancedAnalysis} isLoading={advancedLoading} setIsLoading={setAdvancedLoading} error={advancedError} setError={setAdvancedError} />}
                   </motion.div>
                 </AnimatePresence>
               </div>

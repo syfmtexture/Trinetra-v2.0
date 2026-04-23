@@ -1,15 +1,15 @@
 """
-model.py — Hybrid EfficientNet-V2-S + Transformer Deepfake Detector for Project Trinetra.
+model.py — Deepfake Detector architectures for Project Trinetra.
 
-Architecture
-────────────
-1. Spatial backbone : EfficientNet-V2-S (ImageNet pre-trained, lower blocks frozen)
-   → produces a 1280-d feature vector per frame.
-2. Temporal head    : Transformer Encoder that consumes the per-frame feature sequence.
-3. Adaptive routing : If the input has T == 1 (static image), the Transformer is
-   bypassed and the spatial features go straight to the classification head.
+Two architectures are supported, selected automatically based on checkpoint:
+
+  • Legacy   : EfficientNet-B4 + LSTM    (best_model.pt from Trinetra v1/v2)
+  • Current  : EfficientNet-V2-S + Transformer  (new training runs)
+
+Use `load_detector_from_checkpoint(path, device)` to auto-detect and load.
 """
 
+import logging
 import torch
 import torch.nn as nn
 from torchvision import models
@@ -24,6 +24,99 @@ from src.core.config import (
     TRANSFORMER_LAYERS,
 )
 
+log = logging.getLogger(__name__)
+
+
+# ══════════════════════════════════════════════
+#  Legacy Architecture: EfficientNet-B4 + LSTM
+# ══════════════════════════════════════════════
+
+class LegacyDeepfakeDetector(nn.Module):
+    """
+    Original Trinetra model trained with EfficientNet-B4 backbone and
+    single-layer LSTM for temporal analysis.
+
+    Checkpoint fingerprint: contains 'lstm.weight_ih_l0' key.
+
+    Architecture
+    ────────────
+    Backbone     : EfficientNet-B4  → 1792-d feature per frame
+    Temporal     : LSTM (hidden=512, 1 layer)
+    Classifiers  : fc_seq (512→1) for sequences, fc_static (1792→1) for images
+    """
+
+    _FEATURE_DIM = 1792
+    _LSTM_HIDDEN = 512
+
+    def __init__(self):
+        super().__init__()
+
+        backbone = models.efficientnet_b4(weights=models.EfficientNet_B4_Weights.IMAGENET1K_V1)
+        self.features = backbone.features
+        self.pool = nn.AdaptiveAvgPool2d(1)
+
+        # Freeze lower blocks (same policy as new model)
+        for i, block in enumerate(self.features):
+            if i < FREEZE_BLOCKS:
+                for param in block.parameters():
+                    param.requires_grad = False
+
+        self.lstm = nn.LSTM(
+            input_size=self._FEATURE_DIM,
+            hidden_size=self._LSTM_HIDDEN,
+            num_layers=1,
+            batch_first=True,
+        )
+
+        self.fc_seq = nn.Linear(self._LSTM_HIDDEN, 1)
+        self.fc_static = nn.Linear(self._FEATURE_DIM, 1)
+
+    def _extract_spatial(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.features(x)
+        x = self.pool(x)
+        return torch.flatten(x, 1)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        B, T, C, H, W = x.shape
+        x_flat = x.reshape(B * T, C, H, W)
+        features = self._extract_spatial(x_flat)
+
+        if T > 1:
+            features = features.reshape(B, T, -1)
+            lstm_out, _ = self.lstm(features)
+            last_hidden = lstm_out[:, -1, :]
+            logits = self.fc_seq(last_hidden)
+        else:
+            features = features.reshape(B, -1)
+            logits = self.fc_static(features)
+
+        return logits
+
+    def forward_with_hidden(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor | None]:
+        B, T, C, H, W = x.shape
+        x_flat = x.reshape(B * T, C, H, W)
+        features = self._extract_spatial(x_flat)
+
+        if T > 1:
+            features = features.reshape(B, T, -1)
+            lstm_out, _ = self.lstm(features)
+            last_hidden = lstm_out[:, -1, :]
+            logits = self.fc_seq(last_hidden)
+            return logits, lstm_out
+        else:
+            features = features.reshape(B, -1)
+            logits = self.fc_static(features)
+            return logits, None
+
+    @property
+    def classifier(self) -> nn.Module:
+        """Compatibility: XAI modules access model.classifier for projections."""
+        return self.fc_static
+
+
+# ══════════════════════════════════════════════
+#  Current Architecture: EfficientNet-V2-S + Transformer
+# ══════════════════════════════════════════════
 
 class DeepfakeDetector(nn.Module):
     """
@@ -151,6 +244,47 @@ class DeepfakeDetector(nn.Module):
             features = features.reshape(B, -1)
             logits = self.classifier(features)
             return logits, None
+
+
+# ══════════════════════════════════════════════
+#  Auto-detection: inspect checkpoint → pick model
+# ══════════════════════════════════════════════
+
+def load_detector_from_checkpoint(
+    checkpoint_path: str,
+    device: torch.device,
+) -> nn.Module:
+    """
+    Inspect a checkpoint's keys to determine which architecture it was
+    trained with, instantiate the correct model, and load the weights.
+
+    Detection logic
+    ───────────────
+    • 'lstm.weight_ih_l0' in keys  →  LegacyDeepfakeDetector (B4 + LSTM)
+    • 'transformer.layers.*'       →  DeepfakeDetector        (V2-S + Transformer)
+
+    Returns the model in eval mode on the requested device.
+    """
+    ckpt = torch.load(checkpoint_path, map_location=device, weights_only=False)
+    state = ckpt.get("model_state_dict", ckpt)
+
+    # ── Detect architecture from checkpoint keys ──
+    keys = set(state.keys())
+
+    if "lstm.weight_ih_l0" in keys:
+        log.info("Checkpoint detected: Legacy (EfficientNet-B4 + LSTM)")
+        model = LegacyDeepfakeDetector()
+    elif any(k.startswith("transformer.") for k in keys):
+        log.info("Checkpoint detected: Current (EfficientNet-V2-S + Transformer)")
+        model = DeepfakeDetector()
+    else:
+        log.warning("Could not detect architecture, defaulting to current (V2-S + Transformer)")
+        model = DeepfakeDetector()
+
+    model.to(device)
+    model.load_state_dict(state)
+    model.eval()
+    return model
 
 
 # ──────────────────────────────────────────────

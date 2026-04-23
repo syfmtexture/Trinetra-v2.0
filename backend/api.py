@@ -13,7 +13,13 @@ import base64
 import time
 import io
 import asyncio
+import numpy as np
 from typing import Optional, List, Any, TYPE_CHECKING
+
+# Ensure 'backend' directory is in PYTHONPATH so 'src' can be imported correctly
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+if _script_dir not in sys.path:
+    sys.path.append(_script_dir)
 
 if TYPE_CHECKING:
     # Stubs for the IDE when libraries are not indexed/installed
@@ -49,9 +55,10 @@ else:
     _ML_AVAILABLE = False
     try:
         from src.inference.infer import run_inference, InferenceResult
+        from src.inference.gemini_scanner import analyze_with_gemini
         from src.core.config import MODEL_DIR
         _ML_AVAILABLE = True
-        print("[OK] ML model loaded successfully.")
+        print("[OK] ML model modules loaded successfully.")
     except Exception as _ml_err:
         print(f"[WARN] ML model unavailable: {_ml_err}. Running in DEMO mode.")
         MODEL_DIR = ""
@@ -65,11 +72,8 @@ else:
                 self.rd_result = None
         def run_inference(*args, **kwargs):  # type: ignore
             return InferenceResult()
-
-# Ensure 'backend' directory is in PYTHONPATH so 'src' can be imported correctly
-_script_dir = os.path.dirname(os.path.abspath(__file__))
-if _script_dir not in sys.path:
-    sys.path.append(_script_dir)
+        def analyze_with_gemini(*args, **kwargs): # type: ignore
+            return "DEMO MODE: Gemini analysis is unavailable because dependencies (google-genai) are missing."
 
 def safe_round(val: Any, digits: int = 2) -> float:
     """Helper to ensure type-checkers see a float return without using round() built-in."""
@@ -79,6 +83,13 @@ def safe_round(val: Any, digits: int = 2) -> float:
     except (TypeError, ValueError, OverflowError):
         return 0.0
 
+
+# ═══════════════════════════════════════════════════════════════════
+# DEMO MODE — Set to True to return realistic mock data for all
+# endpoints, bypassing ML inference and Gemini API calls entirely.
+# This is useful for previewing the frontend UI.
+# ═══════════════════════════════════════════════════════════════════
+DEMO_MODE = False
 
 app = FastAPI(title="Trinetra Local API")
 
@@ -107,6 +118,35 @@ class AnalysisResponse(BaseModel):
 
 @app.post("/analyze", response_model=AnalysisResponse)
 async def analyze_image(request: AnalysisRequest):
+    # ── DEMO MODE: return realistic mock data ──
+    if DEMO_MODE:
+        import random
+        await asyncio.sleep(random.uniform(0.8, 2.0))  # simulate latency
+        is_fake_demo = random.random() > 0.35  # 65% chance FAKE for demo
+        fake_prob = random.uniform(72.0, 96.5) if is_fake_demo else random.uniform(8.0, 28.0)
+        local_label = "FAKE" if is_fake_demo else "REAL"
+        local_conf = fake_prob if is_fake_demo else (100.0 - fake_prob)
+        return AnalysisResponse(
+            primary_verdict="FAKE" if is_fake_demo else "REAL",
+            confidence_score=safe_round(fake_prob if is_fake_demo else (100.0 - fake_prob), 2),
+            local_label=local_label,
+            local_confidence=safe_round(local_conf, 2),
+            rd_status="SUSPICIOUS" if is_fake_demo else "AUTHENTIC",
+            rd_score=safe_round(random.uniform(0.70, 0.95) if is_fake_demo else random.uniform(0.05, 0.20), 4),
+            forensic_summary=(
+                f"🚨 CLOUD VERDICT: SUSPICIOUS ({fake_prob:.1f}%). "
+                f"Local model reports {local_label} ({local_conf:.1f}%). "
+                "Multiple spatial anomalies detected in facial region — inconsistent subsurface scattering on left cheek, "
+                "edge halo around jawline, and unnatural specular highlight on iris."
+            ) if is_fake_demo else (
+                f"✅ CLOUD VERDICT: AUTHENTIC. High confidence cloud analysis confirmed media is real. "
+                f"Local model concurs: REAL ({local_conf:.1f}%). No spatial or temporal anomalies detected."
+            ),
+            latency_ms=safe_round(random.uniform(800, 3200), 2),
+            face_crop_base64=None,
+            gradcam_base64=None,
+        )
+
     try:
         # 1. Decode base64 data
         header, data = request.base64_data.split(",", 1) if "," in request.base64_data else (None, request.base64_data)
@@ -191,13 +231,16 @@ async def analyze_image(request: AnalysisRequest):
             summary = f"🛡️ LOCAL VERDICT: {local_label} ({local_conf:.1f}%). Cloud verification was unavailable{rd_reason}."
 
         # 7. Convert images to base64
-        def pil_to_base64(img: Image.Image) -> str:
+        def img_to_base64(img: Any) -> str:
+            if isinstance(img, np.ndarray):
+                img = Image.fromarray(img)
             buffered = io.BytesIO()
             img.save(buffered, format="PNG")
             return base64.b64encode(buffered.getvalue()).decode()
 
-        face_b64 = pil_to_base64(result.face_crop) if result.face_crop else None
-        grad_b64 = pil_to_base64(result.gradcam_overlay) if result.gradcam_overlay else None
+        # result arrays might be None if no face was found or XAI failed
+        face_b64 = img_to_base64(result.face_crop) if result.face_crop is not None else None
+        grad_b64 = img_to_base64(result.gradcam_overlay) if result.gradcam_overlay is not None else None
 
         return AnalysisResponse(
             primary_verdict=str(primary_verdict),
@@ -234,6 +277,111 @@ async def subscribe(request: SubscriptionRequest):
 @app.get("/health")
 async def health_check():
     return {"status": "online", "model": "EfficientNet-V2-S"}
+
+class AdvanceScanRequest(BaseModel):
+    base64_data: str
+
+class AdvanceScanResponse(BaseModel):
+    analysis: str
+
+@app.post("/advance-scan", response_model=AdvanceScanResponse)
+async def advance_scan(request: AdvanceScanRequest):
+    # ── DEMO MODE: return a realistic Gemini-style forensic report ──
+    if DEMO_MODE:
+        import random
+        await asyncio.sleep(random.uniform(2.0, 5.0))  # simulate Gemini latency
+        demo_analysis = """**Verdict:**
+Manipulated
+
+**Confidence:**
+87
+
+**Why this verdict is strongest:**
+
+1. **Facial boundary artifacts:** There is a visible edge halo around the jawline and hairline on the left side of the face, consistent with a face-swap blending boundary. The transition from facial skin to neck skin shows an abrupt change in texture granularity.
+2. **Inconsistent subsurface scattering:** The left ear displays noticeably different translucency compared to the right ear. In a real photograph under this lighting, both ears should exhibit similar subsurface light transmission.
+3. **Iris specular anomaly:** The specular highlights in the left eye appear to originate from a different light source direction than those in the right eye, suggesting the face region was composited from a different source image.
+4. **Skin texture discontinuity:** The forehead region (above the brow line) shows synthetic over-smoothing with a waxy sheen, while the cheeks retain natural pore-level detail — a hallmark of partial face replacement.
+5. **Compression artifact mismatch:** The JPEG compression pattern around the face boundary differs from the background, indicating region-specific re-encoding.
+
+**What argues against it:**
+
+- Overall composition is highly convincing at first glance
+- Lighting direction is globally consistent (single overhead source)
+- Hair strand detail is remarkably natural, especially baby hairs at the temple
+- Body proportions and clothing interaction appear physically plausible
+- Background elements show no signs of warping or deformation
+
+**Most suspicious regions:**
+
+- **Left jawline boundary:** Edge halo and blending seam (3-4px wide)
+- **Forehead above brow line:** Synthetic smoothing, loss of pore detail
+- **Left ear:** Abnormal translucency / subsurface scattering mismatch
+- **Both irises:** Conflicting specular highlight angles
+- **Neck-face junction:** Abrupt texture granularity shift
+
+**Alternative explanations:**
+
+A heavy beauty filter (e.g., FaceApp, Snow, or similar) could explain the forehead smoothing. However, beauty filters typically apply uniformly across the face and do not create the localized boundary artifacts observed at the jawline. The specular highlight inconsistency in the irises is not explained by any standard filter or lens effect.
+
+**Failure risk:**
+
+A state-of-the-art face-swap model (e.g., latest FaceFusion or roop-unleashed) with careful post-processing, manual color grading, and re-compression could potentially reduce the boundary artifacts to near-imperceptible levels. The specular highlight mismatch would require per-eye relighting in post-production to fully resolve, which is within the capability of a skilled adversary."""
+        return AdvanceScanResponse(analysis=demo_analysis)
+
+    temp_path: str | None = None
+    try:
+        # Decode base64 data
+        header, data = request.base64_data.split(",", 1) if "," in request.base64_data else (None, request.base64_data)
+        image_bytes = base64.b64decode(data)
+        
+        ext = ".png"
+        if header:
+            mime_map = {
+                "image/png": ".png", "image/jpeg": ".jpg", "image/jpg": ".jpg",
+                "image/bmp": ".bmp", "image/webp": ".webp",
+            }
+            for mime, extension in mime_map.items():
+                if mime in header.lower():
+                    ext = extension
+                    break
+                    
+        temp_dir = os.path.join(os.getcwd(), "tmp_api")
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_filename = f"gemini_{uuid.uuid4()}{ext}"
+        temp_path = os.path.join(temp_dir, temp_filename)
+        
+        with open(temp_path, "wb") as f:
+            f.write(image_bytes)
+            
+        print(f"[ADVANCE-SCAN] Sending to Gemini: {temp_filename} ({len(image_bytes)//1024}KB)")
+        
+        # Run Gemini API call in a thread to not block event loop
+        analysis_text = await asyncio.to_thread(analyze_with_gemini, temp_path)
+        
+        return AdvanceScanResponse(analysis=analysis_text)
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        err_str = str(e).lower()
+        # Provide user-friendly error messages
+        if "exhausted" in err_str or "429" in err_str or "quota" in err_str:
+            detail = "All API keys are rate-limited. Please wait a minute and try again."
+        elif "500" in err_str or "internal" in err_str or "unavailable" in err_str:
+            detail = "Google's AI servers are temporarily overloaded. Please try again in a few seconds."
+        else:
+            detail = f"Advanced scan failed: {e}"
+        print(f"[ADVANCE-SCAN Error]: {detail}")
+        raise HTTPException(status_code=500, detail=detail)
+    finally:
+        # Always clean up temp file
+        if temp_path:
+            try:
+                os.remove(temp_path)
+            except OSError:
+                pass
+
 
 if __name__ == "__main__":
     import uvicorn # type: ignore

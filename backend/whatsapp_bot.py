@@ -27,7 +27,8 @@ from src.inference.infer import run_inference
 from src.inference.ai_summary import generate_ai_summary
 
 # Load environment variables
-load_dotenv()
+env_path = os.path.join(_backend_dir, ".env")
+load_dotenv(dotenv_path=env_path)
 
 # ── Configuration ──
 ACCESS_TOKEN = os.getenv("WHATSAPP_ACCESS_TOKEN")
@@ -100,7 +101,10 @@ def mark_as_read(message_id: str) -> None:
         "message_id": message_id,
     }
     try:
-        httpx.post(url, json=payload, headers=headers)
+        response = httpx.post(url, json=payload, headers=headers)
+        if response.status_code != 200:
+            logger.error(f"Failed to mark message as read: {response.status_code} - {response.text}")
+        response.raise_for_status()
     except Exception as e:
         logger.error(f"Failed to mark message as read: {e}")
 
@@ -209,7 +213,7 @@ def process_message_async(sender: str, msg_type: str, msg_data: dict, msg_id: st
                     # Only show top 3 most suspicious models
                     models = rd.get("models", [])
                     if models:
-                        sorted_models = sorted(models, key=lambda m: m.get("score", 0), reverse=True)
+                        sorted_models = sorted(models, key=lambda m: m.get("score") if m.get("score") is not None else 0, reverse=True)
                         top = sorted_models[:3]
                         response_text += "📊 Top signals:\n"
                         for m in top:
@@ -237,7 +241,7 @@ def process_message_async(sender: str, msg_type: str, msg_data: dict, msg_id: st
 @app.route("/webhook", methods=["POST"])
 def handle_webhook():
     """Handle incoming WhatsApp messages."""
-    data = request.json
+    data = request.get_json(silent=True, force=True) or {}
 
     try:
         if data.get("entry"):
