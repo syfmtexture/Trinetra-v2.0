@@ -6,7 +6,7 @@ from google import genai
 
 # User provided API keys
 API_KEYS = [
-    "AIzaSyCbTNqZGLO5QxwfEgf-3l561ljt5RInm48","AIzaSyAUNz_4bzeO52JMEI_tiA__PVRYnPNf8QA","AIzaSyBC84TNeSv3Epzg-84ZJKPsbaqr67mq8l0"
+    
 ]
 
 # Maximum image dimension — keeps payloads small & fast
