@@ -66,7 +66,12 @@ threading.Thread(target=cleanup_processed_messages, daemon=True).start()
 # ─────────────────────────────────────────────
 
 def send_whatsapp_message(to: str, text: str) -> None:
-    """Send a text message via WhatsApp Cloud API."""
+    """
+    Sends a text message to the user on WhatsApp.
+    
+    Think of this as the bot's 'voice'. We use the Meta Graph API to send 
+    structured JSON data that WhatsApp turns into a chat bubble on the user's phone.
+    """
     url = f"https://graph.facebook.com/v18.0/{PHONE_ID}/messages"
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",
@@ -110,7 +115,13 @@ def mark_as_read(message_id: str) -> None:
 
 
 def download_media(media_id: str) -> str | None:
-    """Download media from WhatsApp servers using media_id."""
+    """
+    Downloads images or videos from WhatsApp's cloud storage.
+    
+    When someone sends us a photo, WhatsApp doesn't send the pixels directly. 
+    Instead, they give us a 'Media ID'. We have to use that ID to ask Meta for 
+    the actual file, download it locally, and save it for our AI to scan.
+    """
     url = f"https://graph.facebook.com/v18.0/{media_id}"
     headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
 
@@ -160,7 +171,15 @@ def verify_webhook():
 
 
 def process_message_async(sender: str, msg_type: str, msg_data: dict, msg_id: str) -> None:
-    """Background task to handle heavy AI inference and reporting."""
+    """
+    The heavy lifter of the bot. This handles the 'thinking' in the background.
+    
+    Why is it 'async' / in a separate thread?
+    Meta requires our server to respond with an 'OK' within 10 seconds. 
+    However, deepfake detection can take 20-30 seconds. If we did it all in 
+    the main thread, Meta would think we crashed and keep retrying the message.
+    So, we say 'OK' immediately and do the hard work here in the background.
+    """
     try:
         # Tell Meta we received it — stops retry deliveries
         mark_as_read(msg_id)

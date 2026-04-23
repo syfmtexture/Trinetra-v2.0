@@ -60,7 +60,16 @@ class RDResult:
 # ──────────────────────────────────────────────
 
 class KeyRotator:
-    """Thread-safe round-robin key management with local blacklisting."""
+    """
+    The 'Key Manager'. 
+    
+    Since we have multiple API keys, we don't want to use the same one until 
+    it breaks. This class hands out keys in a 'Round-robin' style (one after 
+    another). 
+    
+    If a key hits a rate limit (too many requests), we put it in the 'penalty 
+    box' (blacklist) for 60 seconds and move on to the next one automatically.
+    """
     
     def __init__(self, keys: list[str]):
         self._keys = keys
@@ -128,7 +137,7 @@ async def _analyze_async(file_path: str) -> RDResult:
     if size_mb > limit:
         return RDResult(error=f"File too large: {size_mb:.2f}MB (Limit: {limit}MB)", status="ERROR")
 
-    # 2. Main key-pool loop
+    # 2. The Key-Pool Loop: Trying our luck with different keys
     while True:
         key, key_idx = rotator.get_next()
         if not key:
@@ -142,6 +151,7 @@ async def _analyze_async(file_path: str) -> RDResult:
         logger.info(f"Attempting analysis with key #{key_idx} (Attempt {attempts})...")
         
         try:
+            # We use the official Reality Defender library to talk to their servers.
             rd = RealityDefender(api_key=key)
             
             # Use retry logic for transient network issues

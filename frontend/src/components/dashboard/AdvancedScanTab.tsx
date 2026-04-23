@@ -26,6 +26,7 @@ const SECTION_CONFIG: Record<string, { icon: React.ElementType; color: string; b
   suspicious:   { icon: Target,         color: 'text-amber-500',       bg: 'bg-amber-500/10',    border: 'border-amber-500/20' },
   alternative:  { icon: Lightbulb,      color: 'text-violet-500',      bg: 'bg-violet-500/10',   border: 'border-violet-500/20' },
   failure:      { icon: TriangleAlert,  color: 'text-rose-500',        bg: 'bg-rose-500/10',     border: 'border-rose-500/20' },
+  finalrule:    { icon: ShieldCheck,    color: 'text-indigo-500',      bg: 'bg-indigo-500/10',   border: 'border-indigo-500/20' },
 };
 
 // ── Robust parser: matches **Header:** patterns anywhere in a line ──
@@ -38,11 +39,12 @@ interface ParsedSection {
 const SECTION_MATCHERS: { key: string; regex: RegExp; title: string }[] = [
   { key: 'verdict',     regex: /^\s*\*{0,2}\s*Verdict\s*:?\s*\*{0,2}\s*/i,                                   title: 'Verdict' },
   { key: 'confidence',  regex: /^\s*\*{0,2}\s*Confidence\s*:?\s*\*{0,2}\s*/i,                                title: 'Confidence Score' },
-  { key: 'strongest',   regex: /^\s*\*{0,2}\s*Why this (?:verdict )?is strongest\s*:?\s*\*{0,2}\s*/i,        title: 'Key Evidence' },
-  { key: 'against',     regex: /^\s*\*{0,2}\s*What argues against it\s*:?\s*\*{0,2}\s*/i,                    title: 'Counter-Evidence' },
+  { key: 'strongest',   regex: /^\s*\*{0,2}\s*(?:Why this (?:verdict )?is strongest|Strongest Evidence)\s*:?\s*\*{0,2}\s*/i,        title: 'Key Evidence' },
+  { key: 'against',     regex: /^\s*\*{0,2}\s*(?:What argues against it|Contradicting Evidence)\s*:?\s*\*{0,2}\s*/i,                    title: 'Counter-Evidence' },
   { key: 'suspicious',  regex: /^\s*\*{0,2}\s*Most suspicious regions?\s*:?\s*\*{0,2}\s*/i,                  title: 'Suspicious Regions' },
   { key: 'alternative', regex: /^\s*\*{0,2}\s*Alternative explanations?\s*:?\s*\*{0,2}\s*/i,                 title: 'Alternative Explanations' },
   { key: 'failure',     regex: /^\s*\*{0,2}\s*Failure risk\s*:?\s*\*{0,2}\s*/i,                              title: 'Failure Risk' },
+  { key: 'finalrule',   regex: /^\s*\*{0,2}\s*Final rule\s*:?\s*\*{0,2}\s*/i,                                title: 'Final Rule' },
 ];
 
 function parseAnalysis(raw: string): ParsedSection[] {

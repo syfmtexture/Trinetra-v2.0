@@ -51,16 +51,16 @@ _to_tensor_and_normalize = transforms.Compose([
 
 def _build_train_augmentation(img_size: int = IMG_SIZE) -> A.Compose:
     """
-    Aggressive augmentation chain simulating hostile social-media
-    re-encoding (WhatsApp, Instagram, etc.).
-
-    Probability notes
-    -----------------
-    Each *group* fires at p ≈ 0.5 – 0.6.  Because there are 4 independent
-    groups, the probability that a sample escapes ALL of them is roughly
-    (1-0.5)^4 ≈ 6%.  So ~94% of training images hit at least one
-    degradation — aggressive enough to force adaptation without total
-    data destruction.
+    The 'Digital Torture' pipeline.
+    
+    Why so aggressive? 
+    In the real world, deepfakes are rarely high-quality original files. They 
+    get compressed by WhatsApp, resized by Instagram, and blurred by poor 
+    internet connections. 
+    
+    If we train our AI on 'clean' images, it will fail in the wild. So, we 
+    intentionally 'torture' our training data with blur, noise, and 
+    heavy JPEG compression to make the AI tough enough for social media.
     """
     return A.Compose([
         # ── 0. Resize to model input ──
@@ -129,19 +129,13 @@ def _build_val_transform(img_size: int = IMG_SIZE) -> A.Compose:
 
 class DeepfakeDataset(Dataset):
     """
-    Each item is either:
-      • A *sequence* sample  → dict with tensor (SEQ_LEN, C, H, W), label, is_sequence=True
-      • A *static* sample    → dict with tensor (1, C, H, W),       label, is_sequence=False
-
-    The dataset first groups rows by sequence_id so that all 10 frames
-    of a video are returned as a single sample.
-
-    Parameters
-    ----------y
-    augmentation : albumentations.Compose or None
-        Spatial augmentation pipeline applied on-CPU *before* ImageNet
-        normalisation.  Pass the training pipeline for train splits and
-        None / val pipeline for validation.
+    The 'Librarian' of our training data.
+    
+    This class is responsible for looking at our metadata ledger (CSV) and 
+    finding the correct image files on the hard drive. 
+    
+    It's smart: it knows that a video isn't just one image, but a sequence 
+    of 20 frames. It packages them up neatly for the AI to process.
     """
 
     def __init__(
@@ -231,14 +225,14 @@ class DeepfakeDataset(Dataset):
 
 def collate_fn(batch: list[dict]) -> dict:
     """
-    Splits the batch into two sub-batches (sequences and statics) so that
-    tensors within each group share the same temporal dimension.
-
-    Returns a dict with keys:
-      seq_frames   : (B_seq, SEQ_LEN, C, H, W) or None
-      seq_labels   : (B_seq,) or None
-      static_frames: (B_static, 1, C, H, W) or None
-      static_labels: (B_static,) or None
+    The 'Sorter' for our batches.
+    
+    In our dataset, some items are single photos and some are 20-frame videos. 
+    You can't easily put them in the same box (tensor) because their shapes 
+    are different. 
+    
+    This function sorts them into two separate 'piles' (sub-batches) so the 
+    AI can process the photos and videos efficiently without getting confused.
     """
     seq_frames, seq_labels = [], []
     static_frames, static_labels = [], []
@@ -286,8 +280,12 @@ def build_dataloaders(
     val_subset = torch.utils.data.Subset(val_dataset, val_indices)
 
     # ── Handle Class Imbalance via Oversampling ──
-    # DFDC has ~15x more fake videos than real ones. We calculate weights
-    # for the training subset so each batch sees roughly 50% real / 50% fake.
+    # Problem: Deepfake datasets usually have way more 'Fake' than 'Real'.
+    # If we just trained on that, the AI would become 'paranoid' and call 
+    # everything fake just to be safe.
+    #
+    # Solution: The WeightedRandomSampler. It ensures the AI sees an equal 
+    # number of Real and Fake samples during every training session.
     train_labels = [train_dataset.samples[i]["label"] for i in train_indices]
     class_counts = torch.bincount(torch.tensor(train_labels))
     class_weights = 1.0 / class_counts.float()

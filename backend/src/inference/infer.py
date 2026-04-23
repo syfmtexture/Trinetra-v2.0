@@ -87,10 +87,12 @@ class InferenceResult:
 
 class GradCAM:
     """
-    Gradient-weighted Class Activation Mapping for EfficientNet-B4.
-
-    Hooks into the LAST feature block (model.features[-1]) to capture
-    activations and gradients, then produces a spatial heatmap.
+    X-Ray vision for AI. 
+    
+    Grad-CAM (Gradient-weighted Class Activation Mapping) helps us see 'what' the 
+    AI is looking at when it makes a decision. If the AI flags a face as fake, 
+    this class generates a heatmap that highlights the specific pixels 
+    (like a weird eye or a blurry jawline) that triggered the alarm.
     """
 
     def __init__(self, model: torch.nn.Module):
@@ -155,17 +157,11 @@ class GradCAM:
 
 def overlay_heatmap(face_rgb: np.ndarray, heatmap: np.ndarray, alpha: float = 0.5) -> Image.Image:
     """
-    Blend a Grad-CAM heatmap onto the original face crop.
-
-    Parameters
-    ----------
-    face_rgb  : (H, W, 3) uint8 RGB
-    heatmap   : (h, w) float32 in [0, 1]
-    alpha     : blending factor
-
-    Returns
-    -------
-    PIL.Image — blended overlay
+    Paints the AI's 'suspicion heatmap' over the actual face.
+    
+    Think of this as a weather map, but for deepfakes. 'Red' areas mean the AI 
+    is extremely suspicious of those pixels, while 'blue' means it's calm. 
+    We blend it so you can still see the face underneath.
     """
     h, w = face_rgb.shape[:2]
     heatmap_resized = cv2.resize(heatmap, (w, h))
@@ -207,12 +203,13 @@ def sample_segments(
     frames_per_segment: int = SEQ_LEN,
 ) -> list[list[np.ndarray]]:
     """
-    Split the video into n_segments non-overlapping windows and sample
-    frames_per_segment frames uniformly from each window.
-
-    Returns a list of lists: [ [seg0_frame0, …], [seg1_frame0, …], … ]
-    This gives us much better spatial-temporal coverage than sampling
-    SEQ_LEN frames from the entire video.
+    Smart Video Sampling.
+    
+    Instead of just looking at the first 10 seconds, we chop the video into 
+    sections (beginning, middle, end) and grab frames from each. 
+    
+    Why? Deepfakes often flicker or fail only in specific parts of a video. 
+    This 'segment sampling' ensures we don't miss those hidden glitches.
     """
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
@@ -275,7 +272,13 @@ def _load_mtcnn():
 def _crop_face(
     frame_rgb: np.ndarray, mtcnn
 ) -> tuple[np.ndarray | None, np.ndarray | None, float]:
-    """Return (face_crop (H,W,3), landmarks (5,2), confidence) or (None, None, 0)."""
+    """
+    Finds the face in a photo and cuts it out.
+    
+    The AI model is trained specifically on faces, so we use MTCNN 
+    (a face-finding specialist) to zoom in on the person's identity before 
+    handing it over to our deepfake detector.
+    """
     pil = Image.fromarray(frame_rgb)
     try:
         box, prob, landmarks = mtcnn.detect(pil, landmarks=True)
@@ -306,16 +309,15 @@ def run_inference(
     _model_cache: dict = {},
 ) -> InferenceResult:
     """
-    Run full explainable inference on an image or video file.
-
-    Parameters
-    ----------
-    file_path        : path to image (.jpg/.png) or video (.mp4/.avi/…)
-    checkpoint_path  : path to .pt checkpoint (default: checkpoints/best_model.pt)
-
-    Returns
-    -------
-    InferenceResult with all forensic fields populated
+    The 'Grand Central Station' of Trinetra's analysis.
+    
+    This function takes a file, figures out if it's an image or video, 
+    loads the right AI brain (EfficientNet + LSTM), and runs a full suite 
+    of forensic tests including:
+    - Face detection
+    - AI probability scoring
+    - Heatmap generation (Grad-CAM)
+    - Cloud verification (Reality Defender)
     """
     t_start = time.perf_counter()
 
