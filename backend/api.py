@@ -1,6 +1,6 @@
 from __future__ import annotations
 """
-api.py — FastAPI Backend for Trinetra Chrome Extension.
+api.py — FastAPI Backend for Trinetra Chrome Extension and Dashboard.
 
 Provides a REST endpoint for the extension to send cropped image regions
 for deepfake analysis using the local hybrid model.

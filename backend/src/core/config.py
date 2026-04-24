@@ -32,6 +32,20 @@ RD_ENABLED = len(RD_API_KEYS) > 0
 RD_TIMEOUT = int(os.environ.get("RD_TIMEOUT", "120")) # Give the cloud 2 mins to respond
 RD_RETRY_DELAY = int(os.environ.get("RD_RETRY_DELAY", "2"))
 
+# Reality Defender limits (Adjust based on your tier)
+RD_MAX_IMAGE_SIZE_MB = 10
+RD_MAX_VIDEO_SIZE_MB = 50
+RD_MAX_AUDIO_SIZE_MB = 20
+RD_MAX_DOC_SIZE_MB = 10
+
+RD_SUPPORTED_EXTENSIONS = {
+    ".jpg", ".jpeg", ".png", ".webp",  # Images
+    ".mp4", ".mov",                    # Videos
+    ".mp3", ".wav", ".m4a", ".aac",    # Audio
+    ".pdf", ".docx"                    # Docs
+}
+
+
 # ──────────────────────────────────────────────
 #  Gemini AI: The Advanced Forensic Engine
 # ──────────────────────────────────────────────
