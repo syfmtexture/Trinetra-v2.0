@@ -230,7 +230,9 @@ async def analyze_image(request: AnalysisRequest):
             # If the cloud is offline or unsure, our local AI takes the lead.
             primary_verdict = local_label
             confidence_score = local_conf
-            rd_reason = f" ({rd_status})" if rd_status and rd_status not in ["DISABLED", "None"] else ""
+            # Show the error message if available to help debugging
+            rd_err = f": {rd.get('error')}" if rd and rd.get('error') else ""
+            rd_reason = f" ({rd_status}{rd_err})" if rd_status and rd_status not in ["DISABLED", "None"] else ""
             summary = f"🛡️ LOCAL VERDICT: {local_label} ({local_conf:.1f}%). Cloud verification was unavailable{rd_reason}."
 
         # 7. Convert images to base64

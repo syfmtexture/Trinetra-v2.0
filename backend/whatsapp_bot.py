@@ -268,7 +268,7 @@ def handle_webhook():
                 for change in entry.get("changes", []):
                     value = change.get("value", {})
                     messages = value.get("messages", [])
-
+ 
                     for msg in messages:
                         msg_id = msg.get("id")
                         sender = msg.get("from")

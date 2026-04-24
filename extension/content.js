@@ -196,6 +196,7 @@
     if (loaderOverlay) return;
     loaderOverlay = document.createElement('div');
     loaderOverlay.className = 'trinetra-loader-overlay';
+    loaderOverlay.style.cursor = 'grab';
     loaderOverlay.innerHTML = `
       <div class="trinetra-mandala">
         <div class="trinetra-mandala-ring"></div>
@@ -209,6 +210,44 @@
     `;
     document.body.appendChild(loaderOverlay);
 
+    // Draggable functionality
+    let isDragging = false;
+    let dragStartX, dragStartY;
+    let initialRight, initialBottom;
+
+    loaderOverlay._dragStart = (e) => {
+      if (e.button !== 0) return; // only left click
+      isDragging = true;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      const rect = loaderOverlay.getBoundingClientRect();
+      initialRight = window.innerWidth - rect.right;
+      initialBottom = window.innerHeight - rect.bottom;
+      loaderOverlay.style.cursor = 'grabbing';
+      loaderOverlay.style.transition = 'none';
+      e.preventDefault();
+    };
+
+    loaderOverlay._dragMove = (e) => {
+      if (!isDragging) return;
+      const dx = dragStartX - e.clientX;
+      const dy = dragStartY - e.clientY;
+      loaderOverlay.style.right = (initialRight + dx) + 'px';
+      loaderOverlay.style.bottom = (initialBottom + dy) + 'px';
+    };
+
+    loaderOverlay._dragEnd = () => {
+      if (isDragging) {
+        isDragging = false;
+        loaderOverlay.style.cursor = 'grab';
+        loaderOverlay.style.transition = '';
+      }
+    };
+
+    loaderOverlay.addEventListener('mousedown', loaderOverlay._dragStart);
+    window.addEventListener('mousemove', loaderOverlay._dragMove);
+    window.addEventListener('mouseup', loaderOverlay._dragEnd);
+
     // Allow Escape to cancel
     loaderOverlay._escHandler = (e) => {
       if (e.key === 'Escape') { hideMandalaLoader(); showToast("❌ Cancelled.", "error"); }
@@ -219,6 +258,8 @@
   function hideMandalaLoader() {
     if (!loaderOverlay) return;
     window.removeEventListener('keydown', loaderOverlay._escHandler);
+    window.removeEventListener('mousemove', loaderOverlay._dragMove);
+    window.removeEventListener('mouseup', loaderOverlay._dragEnd);
     loaderOverlay.remove();
     loaderOverlay = null;
   }

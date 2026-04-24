@@ -169,9 +169,8 @@ async def _analyze_async(file_path: str) -> RDResult:
                     # Calculate aggregated score and status from individual models
                     # to prevent hallucinations when only a minority flag as manipulated.
                     if models_data:
-                        # Filter out None scores — the API may return null for some models
-                        valid_scores = [float(s) for m in models_data if (s := m.get("score")) is not None]
-                        valid_scores = [float(m.get("score") or 0.0) for m in models_data if m.get("score") is not None]
+                        # Extract scores, handling potential None values safely
+                        valid_scores = [float(m.get("score")) for m in models_data if m.get("score") is not None]
                         calculated_score = sum(valid_scores) / len(valid_scores) if valid_scores else 0.0
                         
                         if calculated_score >= 0.5:
@@ -181,8 +180,8 @@ async def _analyze_async(file_path: str) -> RDResult:
                         else:
                             calculated_status = "AUTHENTIC"
                     else:
-                        calculated_score = result_data.get("score", 0.0)
-                        calculated_status = result_data.get("status", "INCONCLUSIVE")
+                        calculated_score = float(result_data.get("score", 0.0))
+                        calculated_status = str(result_data.get("status", "INCONCLUSIVE"))
 
                     t_end = time.perf_counter()
                     return RDResult(
@@ -211,14 +210,13 @@ async def _analyze_async(file_path: str) -> RDResult:
                 except Exception as e:
                     logger.error(f"Unexpected error with key #{key_idx}: {e}")
                     raise
-
         except Exception as e:
             logger.error(f"Analysis iteration failed with key #{key_idx}: {e}")
             if attempts >= len(RD_API_KEYS):
                 break
             continue # Try next key
 
-    return RDResult(error="Analysis failed after trying all keys.", attempts=attempts, status="ERROR")
+    return RDResult(error="Analysis failed after trying all available API keys.", attempts=attempts, status="ERROR")
 
 def analyze_with_rd(file_path: str) -> RDResult:
     """
