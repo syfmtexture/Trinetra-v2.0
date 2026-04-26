@@ -27,6 +27,15 @@
         sendResponse({ status: "active" });
         return false;
       }
+      if (request.action === "show-loader") {
+        if (typeof showMandalaLoader === "function") showMandalaLoader();
+      }
+      if (request.action === "hide-loader") {
+        if (typeof hideMandalaLoader === "function") hideMandalaLoader();
+      }
+      if (request.action === "analyze-direct-image") {
+        if (typeof analyzeImage === "function") analyzeImage(request.base64);
+      }
     });
   }
 
@@ -365,6 +374,30 @@
     // ── Latency formatting ──
     const latencyText = typeof data.latency_ms === 'number' ? `${data.latency_ms.toFixed(0)}ms` : '--';
 
+    // ── Build EXIF HTML ──
+    let exifHtml = '';
+    if (data.exif_data && Object.keys(data.exif_data).length > 0) {
+      const rows = Object.entries(data.exif_data).map(([key, value]) => {
+        const displayValue = String(value).length > 30 ? String(value).substring(0, 30) + '...' : value;
+        return `
+          <div class="trinetra-exif-row">
+            <span class="trinetra-exif-key">${key}</span>
+            <span class="trinetra-exif-value">${displayValue}</span>
+          </div>`;
+      }).join('');
+      exifHtml = `
+        <div class="trinetra-exif-card">
+          <div class="trinetra-exif-header">EXIF / METADATA</div>
+          <div class="trinetra-exif-grid">${rows}</div>
+        </div>`;
+    } else {
+      exifHtml = `
+        <div class="trinetra-exif-card empty">
+          <div class="trinetra-exif-header">EXIF / METADATA</div>
+          <div class="trinetra-exif-empty">No metadata or EXIF stripped</div>
+        </div>`;
+    }
+
     modal.innerHTML = `
       <div class="trinetra-modal-content">
         <div class="trinetra-modal-inner">
@@ -440,6 +473,9 @@
             </div>
             ${rdHtml}
           </div>
+
+          <!-- EXIF -->
+          ${exifHtml}
 
           <!-- SUMMARY -->
           <div class="trinetra-summary">${data.forensic_summary}</div>

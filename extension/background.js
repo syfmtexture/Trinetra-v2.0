@@ -26,9 +26,50 @@ chrome.runtime.onInstalled.addListener(() => {
 // ──── Context Menu Click ────
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId === "trinetra-scan") {
-    await activateTrinetra(tab);
+    if (info.mediaType === "image" && info.srcUrl) {
+      await handleDirectImageScan(info.srcUrl, tab);
+    } else {
+      await activateTrinetra(tab);
+    }
   }
 });
+
+async function handleDirectImageScan(srcUrl, tab) {
+  if (!tab || !tab.id) return;
+  try {
+    // Inject scripts first so content.js is ready
+    try {
+      await chrome.scripting.insertCSS({ target: { tabId: tab.id }, files: ["content.css"] });
+      await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["content.js"] });
+    } catch (e) {}
+
+    // Wait slightly to ensure initialization
+    await new Promise(r => setTimeout(r, 200));
+
+    // Send a loading message immediately so user sees action
+    chrome.tabs.sendMessage(tab.id, { action: "show-loader" }).catch(() => {});
+
+    const response = await fetch(srcUrl);
+    const blob = await response.blob();
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64data = reader.result;
+      try {
+        await chrome.tabs.sendMessage(tab.id, { 
+          action: "analyze-direct-image", 
+          base64: base64data 
+        });
+      } catch (e) {
+        console.error("Message to content script failed:", e);
+      }
+    };
+    reader.readAsDataURL(blob);
+  } catch (error) {
+    console.error("Trinetra: Direct image fetch failed, falling back to crop.", error);
+    chrome.tabs.sendMessage(tab.id, { action: "hide-loader" }).catch(() => {});
+    await activateTrinetra(tab);
+  }
+}
 
 // ──── Message Handler ────
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {

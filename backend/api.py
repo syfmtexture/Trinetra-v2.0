@@ -49,7 +49,7 @@ else:
     from fastapi import FastAPI, HTTPException
     from fastapi.middleware.cors import CORSMiddleware
     from pydantic import BaseModel
-    from PIL import Image
+    from PIL import Image, ExifTags
 
     # Wrap heavy ML imports — server starts even if torch/model is slow or unavailable
     _ML_AVAILABLE = False
@@ -115,6 +115,7 @@ class AnalysisResponse(BaseModel):
     latency_ms: float
     face_crop_base64: Optional[str] = None
     gradcam_base64: Optional[str] = None
+    exif_data: Optional[dict] = None
 
 @app.post("/analyze", response_model=AnalysisResponse)
 async def analyze_image(request: AnalysisRequest):
@@ -148,6 +149,7 @@ async def analyze_image(request: AnalysisRequest):
             latency_ms=safe_round(random.uniform(800, 3200), 2),
             face_crop_base64=None,
             gradcam_base64=None,
+            exif_data={"Software": "Adobe Photoshop 24.0", "DateTime": "2024:04:12 10:14:02", "Make": "Sony", "Model": "ILCE-7RM4"} if is_fake_demo else None,
         )
 
     try:
@@ -178,6 +180,27 @@ async def analyze_image(request: AnalysisRequest):
         
         with open(temp_path, "wb") as f:
             f.write(image_bytes)
+            
+        # Extract EXIF if available
+        exif_extracted = None
+        try:
+            with Image.open(temp_path) as img:
+                exif_data_raw = img._getexif() if hasattr(img, '_getexif') else None
+                if exif_data_raw:
+                    exif_extracted = {}
+                    for tag_id, value in exif_data_raw.items():
+                        tag_name = ExifTags.TAGS.get(tag_id, tag_id)
+                        if isinstance(value, (str, int, float)):
+                            exif_extracted[str(tag_name)] = value
+                        elif isinstance(value, bytes):
+                            try:
+                                decoded = value.decode('utf-8', errors='ignore').strip('\x00')
+                                if decoded:
+                                    exif_extracted[str(tag_name)] = decoded
+                            except Exception:
+                                pass
+        except Exception as e:
+            print(f"[API] EXIF extraction failed: {e}")
             
         # 4. Run Inference (in thread pool to avoid blocking the event loop)
         checkpoint_path = os.path.join(MODEL_DIR, "best_model.pt")
@@ -257,7 +280,8 @@ async def analyze_image(request: AnalysisRequest):
             forensic_summary=str(summary),
             latency_ms=safe_round((end_time - start_time) * 1000, 2),
             face_crop_base64=face_b64,
-            gradcam_base64=grad_b64
+            gradcam_base64=grad_b64,
+            exif_data=exif_extracted
         )
         
     except HTTPException:
